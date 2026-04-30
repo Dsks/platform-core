@@ -1,0 +1,55 @@
+name: qomo-platform
+
+services:
+  # ---------- API USERS ----------
+  api-users:
+    image: europe-southwest1-docker.pkg.dev/apps-ds-global/qomo-platform/api-users:${IMAGE_TAG}
+    container_name: qomo_api_users
+    restart: unless-stopped
+    networks: [postgres]
+    env_file:
+      - ./env/.env-qomo-pre
+    ports:
+      - "127.0.0.1:31030:8080"
+
+  # ---------- API CORE ----------
+  api-core:
+    image: europe-southwest1-docker.pkg.dev/apps-ds-global/qomo-platform/api-core:${IMAGE_TAG}
+    container_name: qomo_api_core
+    restart: unless-stopped
+    networks: [postgres]
+    env_file:
+      - ./env/.env-qomo-pre
+    ports:
+      - "127.0.0.1:31031:8080"
+
+  # ---------- EMAIL SENDER (consumer Kafka) ----------
+  email-sender:
+    image: europe-southwest1-docker.pkg.dev/apps-ds-global/qomo-platform/email-sender:${IMAGE_TAG}
+    container_name: qomo_email_sender
+    restart: unless-stopped
+    networks: [postgres]
+    env_file:
+      - ./env/.env-qomo-pre
+
+  # ---------- Frontend CLIENT ----------
+  frontend-client:
+    image: europe-southwest1-docker.pkg.dev/apps-ds-global/qomo-platform/frontend-client:${IMAGE_TAG}
+    container_name: qomo_frontend_client
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:31032:4200"
+    networks: [postgres]
+
+  # ---------- Frontend ADMIN ----------
+  frontend-admin:
+    image: europe-southwest1-docker.pkg.dev/apps-ds-global/qomo-platform/frontend-admin:${IMAGE_TAG}
+    container_name: qomo_frontend_admin
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:31033:80"
+    networks: [postgres]
+
+networks:
+  postgres:
+    external: true

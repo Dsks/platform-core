@@ -1,0 +1,8 @@
+node_modules
+dist
+.angular
+.nx
+.cache
+.git
+.gitignore
+Dockerfile*

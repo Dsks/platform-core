@@ -1,0 +1,84 @@
+{
+  "name": "qomo-admin",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "prefix": "admin",
+  "sourceRoot": "apps/qomo-admin/src",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@angular/build:application",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/qomo-admin",
+        "browser": "apps/qomo-admin/src/main.ts",
+        "tsConfig": "apps/qomo-admin/tsconfig.app.json",
+        "inlineStyleLanguage": "scss",
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "apps/qomo-admin/public"
+          }
+        ],
+        "styles": ["apps/qomo-admin/src/styles.scss"],
+        "baseHref": "/admin/",
+        "deployUrl": "/admin/"
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "500kb",
+              "maximumError": "1mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "4kb",
+              "maximumError": "8kb"
+            }
+          ],
+          "outputHashing": "all"
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "continuous": true,
+      "executor": "@angular/build:dev-server",
+      "configurations": {
+        "production": {
+          "buildTarget": "qomo-admin:build:production"
+        },
+        "development": {
+          "buildTarget": "qomo-admin:build:development"
+        }
+      },
+      "defaultConfiguration": "development"
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {
+        "runnerConfig": "apps/qomo-web/vitest.config.ts"
+      }
+    },
+    "serve-static": {
+      "continuous": true,
+      "executor": "@nx/web:file-server",
+      "options": {
+        "buildTarget": "qomo-admin:build",
+        "port": 4200,
+        "staticFilePath": "dist/apps/qomo-admin/browser",
+        "spa": true
+      }
+    }
+  }
+}

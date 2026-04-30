@@ -1,0 +1,126 @@
+# ==============================================================================
+# GLOBAL .gitignore
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. SECURITY & ENVIRONMENT
+# ------------------------------------------------------------------------------
+.env
+.env.local
+.env.development
+.env.test
+.env.preproduction
+.env.production
+!.env.template
+!.env.example
+
+*.p12
+*.key
+*.pem
+*.jks
+*.asc
+
+# ------------------------------------------------------------------------------
+# 2. DOCKER
+# ------------------------------------------------------------------------------
+docker-compose.override.yml
+.devcontainer/
+.docker/
+.docker-data/
+
+# ------------------------------------------------------------------------------
+# 3. BACKEND (Java / Spring Boot / Gradle)
+# ------------------------------------------------------------------------------
+# Build & Cache
+.gradle/
+build/
+
+# IntelliJ build output (avoid clashing with domain/port/out)
+**/out/production/
+**/out/test/
+
+# Common generated binaries (safe; does NOT affect domain/port/out)
+**/bin/
+
+# Logs
+*.log
+logs/
+
+# Compiled resources
+*.class
+*.jar
+*.war
+*.ear
+
+# Gradle Wrapper (Exception)
+!**/gradle-wrapper.jar
+
+# IDE Metadata (Eclipse/STS)
+.classpath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+.factorypath
+.apt_generated/
+HELP.md
+
+# ------------------------------------------------------------------------------
+# 4. FRONTEND (Node / Nx / Angular)
+# ------------------------------------------------------------------------------
+# Dependencies
+node_modules/
+
+# Build Output
+dist/
+tmp/
+out-tsc/
+
+# NX Cache
+**/.nx/
+.nx/
+
+# Angular Cache
+.angular/
+
+# Logs
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+lerna-debug.log
+
+# Testing & Coverage
+coverage/
+__screenshots__/
+testem.log
+/connect.lock
+vitest.config.*.timestamp*
+
+# ------------------------------------------------------------------------------
+# 5. IDE & SYSTEM FILES
+# ------------------------------------------------------------------------------
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/nbdist/
+/.nb-gradle/
+
+# OS Files
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
