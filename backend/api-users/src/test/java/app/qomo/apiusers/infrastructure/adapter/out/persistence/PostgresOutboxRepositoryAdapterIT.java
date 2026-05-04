@@ -3,8 +3,8 @@ package app.qomo.apiusers.infrastructure.adapter.out.persistence;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import app.qomo.apiusers.TestContainersConfig;
+import app.qomo.apiusers.application.port.out.OutboxRepositoryPort;
 import app.qomo.apiusers.domain.model.OutboxEvent;
-import app.qomo.apiusers.domain.port.out.OutboxRepositoryPort;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Comparator;

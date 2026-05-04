@@ -1,6 +1,6 @@
 package app.qomo.apiusers.infrastructure.adapter.out.security;
 
-import app.qomo.apiusers.domain.port.out.CurrentUserPort;
+import app.qomo.apiusers.application.port.out.CurrentUserPort;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;

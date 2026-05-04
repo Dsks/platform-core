@@ -1,7 +1,7 @@
 package app.qomo.emailsender.infrastructure.adapter.out.persistence;
 
+import app.qomo.emailsender.application.port.out.EmailJobRepositoryPort;
 import app.qomo.emailsender.domain.model.EmailJobRecord;
-import app.qomo.emailsender.domain.port.out.EmailJobRepositoryPort;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Instant;

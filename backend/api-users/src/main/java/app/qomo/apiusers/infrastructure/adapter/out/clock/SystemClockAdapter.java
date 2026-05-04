@@ -1,6 +1,6 @@
 package app.qomo.apiusers.infrastructure.adapter.out.clock;
 
-import app.qomo.apiusers.domain.port.out.ClockPort;
+import app.qomo.apiusers.application.port.out.ClockPort;
 import java.time.Instant;
 
 public final class SystemClockAdapter implements ClockPort {

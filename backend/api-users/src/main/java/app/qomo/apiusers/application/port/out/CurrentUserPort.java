@@ -1,4 +1,4 @@
-package app.qomo.apiusers.domain.port.out;
+package app.qomo.apiusers.application.port.out;
 
 import java.util.Optional;
 import java.util.Set;

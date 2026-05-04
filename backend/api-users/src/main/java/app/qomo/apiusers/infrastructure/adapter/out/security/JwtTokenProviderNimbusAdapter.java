@@ -1,7 +1,7 @@
 package app.qomo.apiusers.infrastructure.adapter.out.security;
 
+import app.qomo.apiusers.application.port.out.JwtTokenProviderPort;
 import app.qomo.apiusers.domain.model.User;
-import app.qomo.apiusers.domain.port.out.JwtTokenProviderPort;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;

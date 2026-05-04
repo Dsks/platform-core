@@ -1,4 +1,4 @@
-package app.qomo.emailsender.domain.port.out;
+package app.qomo.emailsender.application.port.out;
 
 import app.qomo.emailsender.domain.model.EmailJobRecord;
 import java.time.Instant;

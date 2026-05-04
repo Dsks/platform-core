@@ -3,10 +3,10 @@ package app.qomo.apiusers.infrastructure.adapter.out.persistence;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import app.qomo.apiusers.TestContainersConfig;
+import app.qomo.apiusers.application.port.out.VerificationTokenRepositoryPort;
 import app.qomo.apiusers.domain.model.UserId;
 import app.qomo.apiusers.domain.model.VerificationToken;
 import app.qomo.apiusers.domain.model.VerificationTokenId;
-import app.qomo.apiusers.domain.port.out.VerificationTokenRepositoryPort;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.UUID;
@@ -227,9 +227,9 @@ class PostgresVerificationTokenRepositoryAdapterIT {
     Integer invalidatedCount =
         jdbcTemplate.queryForObject(
             """
-            SELECT COUNT(*) FROM auth_verification_tokens
-            WHERE user_id = ? AND consumed_at = ?
-            """,
+                SELECT COUNT(*) FROM auth_verification_tokens
+                WHERE user_id = ? AND consumed_at = ?
+                """,
             Integer.class,
             userId.value(),
             Timestamp.from(now));
@@ -289,9 +289,9 @@ class PostgresVerificationTokenRepositoryAdapterIT {
     Integer passReset =
         jdbcTemplate.queryForObject(
             """
-            SELECT COUNT(*) FROM auth_verification_tokens
-            WHERE user_id = ? AND type = 'PASS_RESET'
-            """,
+                SELECT COUNT(*) FROM auth_verification_tokens
+                WHERE user_id = ? AND type = 'PASS_RESET'
+                """,
             Integer.class,
             userId.value());
 

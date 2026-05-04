@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import app.qomo.emailsender.domain.port.out.PayloadCryptoPort.EncryptedPayload;
+import app.qomo.emailsender.application.port.out.PayloadCryptoPort.EncryptedPayload;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import org.junit.jupiter.api.Test;

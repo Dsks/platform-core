@@ -1,8 +1,8 @@
 package app.qomo.apiusers.infrastructure.adapter.out.event;
 
 import app.qomo.apiusers.application.observability.PiiUtil;
+import app.qomo.apiusers.application.port.out.UserEventPublisherPort;
 import app.qomo.apiusers.domain.model.User;
-import app.qomo.apiusers.domain.port.out.UserEventPublisherPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

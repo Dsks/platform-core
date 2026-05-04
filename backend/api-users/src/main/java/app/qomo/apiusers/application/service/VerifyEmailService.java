@@ -1,10 +1,10 @@
 package app.qomo.apiusers.application.service;
 
 import app.qomo.apiusers.application.port.in.VerifyEmailUseCase;
+import app.qomo.apiusers.application.port.out.ClockPort;
+import app.qomo.apiusers.application.port.out.UserRepositoryPort;
+import app.qomo.apiusers.application.port.out.VerificationTokenRepositoryPort;
 import app.qomo.apiusers.domain.model.VerificationToken;
-import app.qomo.apiusers.domain.port.out.ClockPort;
-import app.qomo.apiusers.domain.port.out.UserRepositoryPort;
-import app.qomo.apiusers.domain.port.out.VerificationTokenRepositoryPort;
 import app.qomo.apiusers.infrastructure.util.TokenHasher;
 import java.util.Objects;
 import org.springframework.transaction.annotation.Transactional;

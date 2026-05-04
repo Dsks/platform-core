@@ -1,4 +1,4 @@
-package app.qomo.apiusers.domain.port.out;
+package app.qomo.apiusers.application.port.out;
 
 import app.qomo.apiusers.domain.model.UserId;
 import app.qomo.apiusers.domain.model.VerificationToken;

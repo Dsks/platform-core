@@ -1,7 +1,7 @@
 package app.qomo.apiusers.infrastructure.adapter.out.event;
 
+import app.qomo.apiusers.application.port.out.OutboxEventPublisherPort;
 import app.qomo.apiusers.domain.model.OutboxEvent;
-import app.qomo.apiusers.domain.port.out.OutboxEventPublisherPort;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;

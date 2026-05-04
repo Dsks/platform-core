@@ -1,6 +1,6 @@
 package app.qomo.emailsender.infrastructure.adapter.out.crypto;
 
-import app.qomo.emailsender.domain.port.out.PayloadCryptoPort;
+import app.qomo.emailsender.application.port.out.PayloadCryptoPort;
 import java.security.SecureRandom;
 import java.util.Base64;
 import javax.crypto.Cipher;

@@ -1,8 +1,8 @@
 package app.qomo.apiusers.infrastructure.adapter.out.persistence;
 
+import app.qomo.apiusers.application.port.out.RoleRepositoryPort;
 import app.qomo.apiusers.domain.model.Role;
 import app.qomo.apiusers.domain.model.RoleId;
-import app.qomo.apiusers.domain.port.out.RoleRepositoryPort;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;

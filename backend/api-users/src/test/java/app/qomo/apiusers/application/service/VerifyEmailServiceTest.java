@@ -9,12 +9,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import app.qomo.apiusers.application.port.in.VerifyEmailUseCase;
+import app.qomo.apiusers.application.port.out.ClockPort;
+import app.qomo.apiusers.application.port.out.UserRepositoryPort;
+import app.qomo.apiusers.application.port.out.VerificationTokenRepositoryPort;
 import app.qomo.apiusers.domain.model.UserId;
 import app.qomo.apiusers.domain.model.VerificationToken;
 import app.qomo.apiusers.domain.model.VerificationTokenId;
-import app.qomo.apiusers.domain.port.out.ClockPort;
-import app.qomo.apiusers.domain.port.out.UserRepositoryPort;
-import app.qomo.apiusers.domain.port.out.VerificationTokenRepositoryPort;
 import app.qomo.apiusers.infrastructure.util.TokenHasher;
 import java.time.Instant;
 import java.util.Optional;

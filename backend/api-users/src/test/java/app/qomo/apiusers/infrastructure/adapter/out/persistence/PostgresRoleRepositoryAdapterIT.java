@@ -3,8 +3,8 @@ package app.qomo.apiusers.infrastructure.adapter.out.persistence;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import app.qomo.apiusers.TestContainersConfig;
+import app.qomo.apiusers.application.port.out.RoleRepositoryPort;
 import app.qomo.apiusers.domain.constant.SystemRoleIds;
-import app.qomo.apiusers.domain.port.out.RoleRepositoryPort;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

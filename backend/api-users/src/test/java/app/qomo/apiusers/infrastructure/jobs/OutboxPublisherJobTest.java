@@ -9,10 +9,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import app.qomo.apiusers.application.port.out.ClockPort;
+import app.qomo.apiusers.application.port.out.OutboxEventPublisherPort;
+import app.qomo.apiusers.application.port.out.OutboxRepositoryPort;
 import app.qomo.apiusers.domain.model.OutboxEvent;
-import app.qomo.apiusers.domain.port.out.ClockPort;
-import app.qomo.apiusers.domain.port.out.OutboxEventPublisherPort;
-import app.qomo.apiusers.domain.port.out.OutboxRepositoryPort;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;

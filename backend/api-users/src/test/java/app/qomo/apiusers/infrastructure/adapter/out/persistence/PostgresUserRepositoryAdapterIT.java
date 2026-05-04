@@ -3,13 +3,13 @@ package app.qomo.apiusers.infrastructure.adapter.out.persistence;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import app.qomo.apiusers.TestContainersConfig;
+import app.qomo.apiusers.application.port.out.UserRepositoryPort;
 import app.qomo.apiusers.domain.constant.SystemRoleIds;
 import app.qomo.apiusers.domain.model.Email;
 import app.qomo.apiusers.domain.model.PasswordHash;
 import app.qomo.apiusers.domain.model.Role;
 import app.qomo.apiusers.domain.model.User;
 import app.qomo.apiusers.domain.model.UserId;
-import app.qomo.apiusers.domain.port.out.UserRepositoryPort;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Set;

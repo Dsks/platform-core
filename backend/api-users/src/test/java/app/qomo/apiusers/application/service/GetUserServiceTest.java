@@ -6,11 +6,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import app.qomo.apiusers.application.port.out.UserRepositoryPort;
 import app.qomo.apiusers.domain.model.Email;
 import app.qomo.apiusers.domain.model.PasswordHash;
 import app.qomo.apiusers.domain.model.User;
 import app.qomo.apiusers.domain.model.UserId;
-import app.qomo.apiusers.domain.port.out.UserRepositoryPort;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.Set;

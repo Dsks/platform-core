@@ -2,8 +2,8 @@ package app.qomo.apiusers.application.service;
 
 import app.qomo.apiusers.application.exception.InvalidCommandException;
 import app.qomo.apiusers.application.port.in.ResendEmailVerificationUseCase;
+import app.qomo.apiusers.application.port.out.UserRepositoryPort;
 import app.qomo.apiusers.domain.model.Email;
-import app.qomo.apiusers.domain.port.out.UserRepositoryPort;
 import java.util.Objects;
 
 public class ResendEmailVerificationService implements ResendEmailVerificationUseCase {

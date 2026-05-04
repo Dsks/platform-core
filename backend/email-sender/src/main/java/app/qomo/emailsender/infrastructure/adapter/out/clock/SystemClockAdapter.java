@@ -1,6 +1,6 @@
 package app.qomo.emailsender.infrastructure.adapter.out.clock;
 
-import app.qomo.emailsender.domain.port.out.ClockPort;
+import app.qomo.emailsender.application.port.out.ClockPort;
 import java.time.Instant;
 
 public final class SystemClockAdapter implements ClockPort {

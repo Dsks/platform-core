@@ -1,6 +1,6 @@
 package app.qomo.emailsender.infrastructure.adapter.out.mail;
 
-import app.qomo.emailsender.domain.port.out.EmailSenderPort;
+import app.qomo.emailsender.application.port.out.EmailSenderPort;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.mail.javamail.JavaMailSender;

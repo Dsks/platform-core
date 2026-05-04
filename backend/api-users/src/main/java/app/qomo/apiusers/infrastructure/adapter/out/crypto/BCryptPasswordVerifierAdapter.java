@@ -1,7 +1,7 @@
 package app.qomo.apiusers.infrastructure.adapter.out.crypto;
 
+import app.qomo.apiusers.application.port.out.PasswordVerifierPort;
 import app.qomo.apiusers.domain.model.PasswordHash;
-import app.qomo.apiusers.domain.port.out.PasswordVerifierPort;
 import java.util.Objects;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 

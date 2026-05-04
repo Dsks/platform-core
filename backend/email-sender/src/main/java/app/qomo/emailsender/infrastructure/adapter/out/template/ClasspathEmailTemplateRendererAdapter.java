@@ -1,7 +1,7 @@
 package app.qomo.emailsender.infrastructure.adapter.out.template;
 
 import app.qomo.emailsender.application.exception.TemplateNotFoundException;
-import app.qomo.emailsender.domain.port.out.EmailTemplateRendererPort;
+import app.qomo.emailsender.application.port.out.EmailTemplateRendererPort;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;

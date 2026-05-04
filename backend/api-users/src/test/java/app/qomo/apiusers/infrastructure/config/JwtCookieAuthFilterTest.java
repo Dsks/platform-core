@@ -7,8 +7,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import app.qomo.apiusers.domain.port.out.ClockPort;
-import app.qomo.apiusers.domain.port.out.JwtTokenProviderPort;
+import app.qomo.apiusers.application.port.out.ClockPort;
+import app.qomo.apiusers.application.port.out.JwtTokenProviderPort;
 import app.qomo.apiusers.infrastructure.adapter.in.web.AuthController;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

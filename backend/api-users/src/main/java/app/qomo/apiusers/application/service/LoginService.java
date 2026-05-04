@@ -4,10 +4,10 @@ import app.qomo.apiusers.application.exception.InvalidCommandException;
 import app.qomo.apiusers.application.exception.InvalidCredentialsException;
 import app.qomo.apiusers.application.exception.UserInactiveException;
 import app.qomo.apiusers.application.port.in.LoginUseCase;
+import app.qomo.apiusers.application.port.out.ClockPort;
+import app.qomo.apiusers.application.port.out.PasswordVerifierPort;
+import app.qomo.apiusers.application.port.out.UserRepositoryPort;
 import app.qomo.apiusers.domain.model.Email;
-import app.qomo.apiusers.domain.port.out.ClockPort;
-import app.qomo.apiusers.domain.port.out.PasswordVerifierPort;
-import app.qomo.apiusers.domain.port.out.UserRepositoryPort;
 import java.util.Objects;
 
 public class LoginService implements LoginUseCase {

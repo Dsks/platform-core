@@ -16,9 +16,9 @@ import app.qomo.apiusers.application.port.in.LoginUseCase;
 import app.qomo.apiusers.application.port.in.RegisterUserUseCase;
 import app.qomo.apiusers.application.port.in.ResendEmailVerificationUseCase;
 import app.qomo.apiusers.application.port.in.VerifyEmailUseCase;
+import app.qomo.apiusers.application.port.out.ClockPort;
+import app.qomo.apiusers.application.port.out.JwtTokenProviderPort;
 import app.qomo.apiusers.domain.model.UserId;
-import app.qomo.apiusers.domain.port.out.ClockPort;
-import app.qomo.apiusers.domain.port.out.JwtTokenProviderPort;
 import app.qomo.apiusers.infrastructure.adapter.in.web.AuthController;
 import app.qomo.apiusers.infrastructure.adapter.in.web.UserController;
 import app.qomo.apiusers.infrastructure.adapter.in.web.VerifyEmailController;
@@ -107,12 +107,12 @@ class SecurityConfigJwtWebLayerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
-                    {
-                      "email": "new-user@qomo.app",
-                      "password": "StrongPass123!",
-                      "roles": ["USER"]
-                    }
-                    """)
+                        {
+                          "email": "new-user@qomo.app",
+                          "password": "StrongPass123!",
+                          "roles": ["USER"]
+                        }
+                        """)
                 .cookie(new Cookie(AuthController.AUTH_COOKIE_NAME, "user-jwt")))
         .andExpect(status().isForbidden());
   }
@@ -133,12 +133,12 @@ class SecurityConfigJwtWebLayerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
-                    {
-                      "email": "new-admin-created-user@qomo.app",
-                      "password": "StrongPass123!",
-                      "roles": ["USER"]
-                    }
-                    """)
+                        {
+                          "email": "new-admin-created-user@qomo.app",
+                          "password": "StrongPass123!",
+                          "roles": ["USER"]
+                        }
+                        """)
                 .cookie(new Cookie(AuthController.AUTH_COOKIE_NAME, "admin-jwt")))
         .andExpect(status().isAccepted());
   }

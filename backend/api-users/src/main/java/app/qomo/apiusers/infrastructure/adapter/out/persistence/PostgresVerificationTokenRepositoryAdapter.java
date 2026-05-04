@@ -1,9 +1,9 @@
 package app.qomo.apiusers.infrastructure.adapter.out.persistence;
 
+import app.qomo.apiusers.application.port.out.VerificationTokenRepositoryPort;
 import app.qomo.apiusers.domain.model.UserId;
 import app.qomo.apiusers.domain.model.VerificationToken;
 import app.qomo.apiusers.domain.model.VerificationTokenId;
-import app.qomo.apiusers.domain.port.out.VerificationTokenRepositoryPort;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Objects;

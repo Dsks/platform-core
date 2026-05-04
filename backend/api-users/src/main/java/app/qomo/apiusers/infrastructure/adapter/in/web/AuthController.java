@@ -2,8 +2,8 @@ package app.qomo.apiusers.infrastructure.adapter.in.web;
 
 import app.qomo.apiusers.application.port.in.LoginUseCase;
 import app.qomo.apiusers.application.port.in.RegisterUserUseCase;
-import app.qomo.apiusers.domain.port.out.ClockPort;
-import app.qomo.apiusers.domain.port.out.JwtTokenProviderPort;
+import app.qomo.apiusers.application.port.out.ClockPort;
+import app.qomo.apiusers.application.port.out.JwtTokenProviderPort;
 import app.qomo.apiusers.infrastructure.adapter.in.web.dto.LoginRequest;
 import app.qomo.apiusers.infrastructure.adapter.in.web.dto.RegisterRequest;
 import app.qomo.apiusers.infrastructure.adapter.in.web.dto.RegistrationAcceptedResponse;

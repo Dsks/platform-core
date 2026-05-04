@@ -8,14 +8,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import app.qomo.apiusers.application.exception.RoleNotFoundException;
+import app.qomo.apiusers.application.port.out.ClockPort;
+import app.qomo.apiusers.application.port.out.PasswordHasherPort;
+import app.qomo.apiusers.application.port.out.RoleRepositoryPort;
+import app.qomo.apiusers.application.port.out.UserRepositoryPort;
 import app.qomo.apiusers.domain.model.PasswordHash;
 import app.qomo.apiusers.domain.model.Role;
 import app.qomo.apiusers.domain.model.RoleId;
 import app.qomo.apiusers.domain.model.User;
-import app.qomo.apiusers.domain.port.out.ClockPort;
-import app.qomo.apiusers.domain.port.out.PasswordHasherPort;
-import app.qomo.apiusers.domain.port.out.RoleRepositoryPort;
-import app.qomo.apiusers.domain.port.out.UserRepositoryPort;
 import java.time.Instant;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;

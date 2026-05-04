@@ -16,8 +16,8 @@ import app.qomo.apiusers.application.port.in.CreateUserUseCase;
 import app.qomo.apiusers.application.port.in.GetUserUseCase;
 import app.qomo.apiusers.application.port.in.LoginUseCase;
 import app.qomo.apiusers.application.port.in.RegisterUserUseCase;
-import app.qomo.apiusers.domain.port.out.ClockPort;
-import app.qomo.apiusers.domain.port.out.JwtTokenProviderPort;
+import app.qomo.apiusers.application.port.out.ClockPort;
+import app.qomo.apiusers.application.port.out.JwtTokenProviderPort;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,8 +55,8 @@ class ApiExceptionHandlerWebContractTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
-                    {"email":"bad-email","password":""}
-                    """))
+                        {"email":"bad-email","password":""}
+                        """))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.title").value("VALIDATION_ERROR"))
         .andExpect(jsonPath("$.status").value(400))
@@ -102,12 +102,12 @@ class ApiExceptionHandlerWebContractTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
-                    {
-                      "email": "used@example.com",
-                      "password": "StrongPass123!",
-                      "roles": ["USER"]
-                    }
-                    """))
+                        {
+                          "email": "used@example.com",
+                          "password": "StrongPass123!",
+                          "roles": ["USER"]
+                        }
+                        """))
         .andExpect(status().isConflict())
         .andExpect(jsonPath("$.title").value("USER_EMAIL_ALREADY_IN_USE"))
         .andExpect(jsonPath("$.status").value(409))
@@ -128,8 +128,8 @@ class ApiExceptionHandlerWebContractTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
-                    {"email":"used@example.com","password":"StrongPass123!"}
-                    """))
+                        {"email":"used@example.com","password":"StrongPass123!"}
+                        """))
         .andExpect(status().isAccepted())
         .andExpect(jsonPath("$.requestId").isString())
         .andExpect(jsonPath("$.message").value("If the email is valid, you'll receive next steps."))
@@ -147,8 +147,8 @@ class ApiExceptionHandlerWebContractTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
-                    {"email":"user@example.com","password":"StrongPass123!"}
-                    """))
+                        {"email":"user@example.com","password":"StrongPass123!"}
+                        """))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.title").value("FORBIDDEN_OPERATION"))
         .andExpect(jsonPath("$.status").value(403))
@@ -167,8 +167,8 @@ class ApiExceptionHandlerWebContractTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
-                    {"email":"user@example.com","password":"StrongPass123!"}
-                    """))
+                        {"email":"user@example.com","password":"StrongPass123!"}
+                        """))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.title").value("SOME_UNKNOWN_CODE"))
         .andExpect(jsonPath("$.status").value(400))

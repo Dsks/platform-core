@@ -2,13 +2,13 @@ package app.qomo.apiusers.infrastructure.config;
 
 import app.qomo.apiusers.application.exception.RoleNotFoundException;
 import app.qomo.apiusers.application.observability.PiiUtil;
+import app.qomo.apiusers.application.port.out.ClockPort;
+import app.qomo.apiusers.application.port.out.PasswordHasherPort;
+import app.qomo.apiusers.application.port.out.RoleRepositoryPort;
+import app.qomo.apiusers.application.port.out.UserRepositoryPort;
 import app.qomo.apiusers.domain.model.Email;
 import app.qomo.apiusers.domain.model.User;
 import app.qomo.apiusers.domain.model.UserId;
-import app.qomo.apiusers.domain.port.out.ClockPort;
-import app.qomo.apiusers.domain.port.out.PasswordHasherPort;
-import app.qomo.apiusers.domain.port.out.RoleRepositoryPort;
-import app.qomo.apiusers.domain.port.out.UserRepositoryPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;

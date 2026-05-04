@@ -1,7 +1,7 @@
 package app.qomo.apiusers.infrastructure.adapter.out.persistence;
 
+import app.qomo.apiusers.application.port.out.OutboxRepositoryPort;
 import app.qomo.apiusers.domain.model.OutboxEvent;
-import app.qomo.apiusers.domain.port.out.OutboxRepositoryPort;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;

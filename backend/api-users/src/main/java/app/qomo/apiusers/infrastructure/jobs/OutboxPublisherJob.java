@@ -1,8 +1,8 @@
 package app.qomo.apiusers.infrastructure.jobs;
 
-import app.qomo.apiusers.domain.port.out.ClockPort;
-import app.qomo.apiusers.domain.port.out.OutboxEventPublisherPort;
-import app.qomo.apiusers.domain.port.out.OutboxRepositoryPort;
+import app.qomo.apiusers.application.port.out.ClockPort;
+import app.qomo.apiusers.application.port.out.OutboxEventPublisherPort;
+import app.qomo.apiusers.application.port.out.OutboxRepositoryPort;
 import java.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
