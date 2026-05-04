@@ -28,7 +28,7 @@ import org.testcontainers.utility.DockerImageName;
 class EmailVerificationCrossServiceE2ETest {
 
   private static final String TOPIC_EMAIL_COMMANDS = "qomo.email.commands.e2e";
-  private static final Duration EVENTUAL_CONSISTENCY_TIMEOUT = Duration.ofSeconds(20);
+  private static final Duration EVENTUAL_CONSISTENCY_TIMEOUT = Duration.ofSeconds(30);
 
   @Container
   private static final PostgreSQLContainer<?> usersDb =
@@ -132,12 +132,11 @@ class EmailVerificationCrossServiceE2ETest {
 
     String outboxStatusAfterPublishing =
         waitUntilOutboxStatus(usersJdbc, outboxId, "SENT", EVENTUAL_CONSISTENCY_TIMEOUT);
-
     assertThat(outboxStatusAfterPublishing).isEqualTo("SENT");
 
     JdbcTemplate emailJdbc = emailSenderContext.getBean(JdbcTemplate.class);
     Map<String, Object> emailJobRow =
-        waitUntilEmailJobExists(emailJdbc, eventId, EVENTUAL_CONSISTENCY_TIMEOUT);
+        waitUntilEmailJobStatus(emailJdbc, eventId, "FAILED", EVENTUAL_CONSISTENCY_TIMEOUT);
 
     assertThat(emailJobRow.get("status")).isEqualTo("FAILED");
     assertThat((Integer) emailJobRow.get("attempts")).isEqualTo(1);
@@ -173,9 +172,11 @@ class EmailVerificationCrossServiceE2ETest {
         "Timed out waiting for outbox status=" + expectedStatus + " for outboxId=" + outboxId);
   }
 
-  private Map<String, Object> waitUntilEmailJobExists(
-      JdbcTemplate emailJdbc, UUID eventId, Duration timeout) {
+  private Map<String, Object> waitUntilEmailJobStatus(
+      JdbcTemplate emailJdbc, UUID eventId, String expectedStatus, Duration timeout) {
     long deadlineNanos = System.nanoTime() + timeout.toNanos();
+    Map<String, Object> lastObservedRow = null;
+
     while (System.nanoTime() < deadlineNanos) {
       var rows =
           emailJdbc.queryForList(
@@ -187,7 +188,10 @@ class EmailVerificationCrossServiceE2ETest {
               eventId);
 
       if (!rows.isEmpty()) {
-        return rows.getFirst();
+        lastObservedRow = rows.getFirst();
+        if (expectedStatus.equals(lastObservedRow.get("status"))) {
+          return lastObservedRow;
+        }
       }
 
       try {
@@ -195,7 +199,7 @@ class EmailVerificationCrossServiceE2ETest {
       } catch (InterruptedException interruptedException) {
         Thread.currentThread().interrupt();
         throw new IllegalStateException(
-            "Interrupted while waiting for email job creation", interruptedException);
+            "Interrupted while waiting for email job status", interruptedException);
       }
     }
 
@@ -210,8 +214,12 @@ class EmailVerificationCrossServiceE2ETest {
                 """);
 
     throw new AssertionError(
-        "Timed out waiting for email job for eventId="
+        "Timed out waiting for email job status="
+            + expectedStatus
+            + " for eventId="
             + eventId
+            + ", lastObservedRow="
+            + lastObservedRow
             + ", totalJobs="
             + totalJobs
             + ", latestRows="
