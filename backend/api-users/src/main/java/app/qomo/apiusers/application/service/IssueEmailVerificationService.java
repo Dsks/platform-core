@@ -48,28 +48,27 @@ public class IssueEmailVerificationService {
       ObjectMapper objectMapper,
       String emailCommandsTopic) {
     this.verificationTokenRepository =
-        Objects.requireNonNull(verificationTokenRepository,
-            "verificationTokenRepository cannot be null");
-    this.outboxRepository = Objects.requireNonNull(outboxRepository,
-        "outboxRepository cannot be null");
+        Objects.requireNonNull(
+            verificationTokenRepository, "verificationTokenRepository cannot be null");
+    this.outboxRepository =
+        Objects.requireNonNull(outboxRepository, "outboxRepository cannot be null");
     this.clock = Objects.requireNonNull(clock, "clock cannot be null");
     this.otpGenerator = Objects.requireNonNull(otpGenerator, "otpGenerator cannot be null");
     this.tokenHasher = Objects.requireNonNull(tokenHasher, "tokenHasher cannot be null");
     this.emailOtpTtl = Objects.requireNonNull(emailOtpTtl, "emailOtpTtl cannot be null");
-    this.resendMinInterval = Objects.requireNonNull(resendMinInterval,
-        "resendMinInterval cannot be null");
+    this.resendMinInterval =
+        Objects.requireNonNull(resendMinInterval, "resendMinInterval cannot be null");
     this.objectMapper = Objects.requireNonNull(objectMapper, "objectMapper cannot be null");
-    this.emailCommandsTopic = Objects.requireNonNull(emailCommandsTopic,
-        "emailCommandsTopic cannot be null");
+    this.emailCommandsTopic =
+        Objects.requireNonNull(emailCommandsTopic, "emailCommandsTopic cannot be null");
   }
 
   @Transactional
   public IssueResult issue(UserId userId, Email email, String reason, String correlationId) {
     var now = clock.now();
-    var latestActive = verificationTokenRepository.findLatestActiveByUserId(
-        userId,
-        VerificationToken.Type.EMAIL_VERIFICATION,
-        now);
+    var latestActive =
+        verificationTokenRepository.findLatestActiveByUserId(
+            userId, VerificationToken.Type.EMAIL_VERIFICATION, now);
 
     if (latestActive.isPresent()) {
       var lastSentAt = latestActive.get().lastSentAt();
@@ -83,16 +82,16 @@ public class IssueEmailVerificationService {
       }
     }
 
-    verificationTokenRepository.invalidateActiveTokens(userId,
-        VerificationToken.Type.EMAIL_VERIFICATION, now);
+    verificationTokenRepository.invalidateActiveTokens(
+        userId, VerificationToken.Type.EMAIL_VERIFICATION, now);
 
     String otp = otpGenerator.generate6Digits();
     String otpHash = tokenHasher.sha256Hex(otp);
     UUID verificationSessionId = UUID.randomUUID();
 
     verificationTokenRepository.saveNewToken(
-        VerificationToken.emailVerificationOtp(userId, otpHash, verificationSessionId, now,
-            emailOtpTtl));
+        VerificationToken.emailVerificationOtp(
+            userId, otpHash, verificationSessionId, now, emailOtpTtl));
 
     var event =
         EmailVerificationRequestedCommand.emailVerification(
@@ -142,7 +141,5 @@ public class IssueEmailVerificationService {
     }
   }
 
-  public record IssueResult(UUID verificationSessionId, long ttlSeconds, boolean issued) {
-
-  }
+  public record IssueResult(UUID verificationSessionId, long ttlSeconds, boolean issued) {}
 }

@@ -174,7 +174,5 @@ public class PostgresUserRepositoryAdapter implements UserRepositoryPort {
       boolean isVerified,
       Instant lastLogin,
       Instant createdAt,
-      Instant updatedAt) {
-
-  }
+      Instant updatedAt) {}
 }

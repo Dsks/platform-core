@@ -27,11 +27,9 @@ import org.springframework.test.context.ActiveProfiles;
 @Import(TestContainersConfig.class)
 class PostgresUserRepositoryAdapterIT {
 
-  @Autowired
-  private UserRepositoryPort userRepository;
+  @Autowired private UserRepositoryPort userRepository;
 
-  @Autowired
-  private JdbcTemplate jdbcTemplate;
+  @Autowired private JdbcTemplate jdbcTemplate;
 
   @BeforeEach
   void cleanTables() {
@@ -43,8 +41,8 @@ class PostgresUserRepositoryAdapterIT {
     UserId userId = new UserId(UUID.fromString("0b8cc67d-c9dd-4f32-b042-4a16c350e0a7"));
     Instant now = Instant.parse("2026-03-25T10:00:00Z");
 
-    User user = User.createNew(userId, Email.of("alice@example.com"), new PasswordHash("hash-1"),
-        now);
+    User user =
+        User.createNew(userId, Email.of("alice@example.com"), new PasswordHash("hash-1"), now);
     user.addRole(Role.user(SystemRoleIds.USER), now);
     user.addRole(Role.admin(SystemRoleIds.ADMIN), now);
 
@@ -63,10 +61,9 @@ class PostgresUserRepositoryAdapterIT {
     assertThat(stored.updatedAt()).isEqualTo(now);
     assertThat(stored.roles()).extracting(Role::name).containsExactlyInAnyOrder("USER", "ADMIN");
 
-    Timestamp lastLogin = jdbcTemplate.queryForObject(
-        "SELECT last_login FROM auth_users WHERE id = ?",
-        Timestamp.class,
-        userId.value());
+    Timestamp lastLogin =
+        jdbcTemplate.queryForObject(
+            "SELECT last_login FROM auth_users WHERE id = ?", Timestamp.class, userId.value());
     assertThat(lastLogin).isNull();
   }
 
@@ -86,28 +83,30 @@ class PostgresUserRepositoryAdapterIT {
     Instant firstUpdate = Instant.parse("2026-03-20T09:01:00Z");
     Instant secondUpdate = Instant.parse("2026-03-20T10:30:00Z");
 
-    User initial = User.restore(
-        id,
-        Email.of("bob@example.com"),
-        new PasswordHash("hash-old"),
-        true,
-        false,
-        null,
-        createdAt,
-        firstUpdate,
-        Set.of(Role.user(SystemRoleIds.USER)));
+    User initial =
+        User.restore(
+            id,
+            Email.of("bob@example.com"),
+            new PasswordHash("hash-old"),
+            true,
+            false,
+            null,
+            createdAt,
+            firstUpdate,
+            Set.of(Role.user(SystemRoleIds.USER)));
     userRepository.save(initial);
 
-    User updated = User.restore(
-        id,
-        Email.of("bob+updated@example.com"),
-        new PasswordHash("hash-new"),
-        false,
-        true,
-        Instant.parse("2026-03-20T10:00:00Z"),
-        createdAt,
-        secondUpdate,
-        Set.of(Role.admin(SystemRoleIds.ADMIN)));
+    User updated =
+        User.restore(
+            id,
+            Email.of("bob+updated@example.com"),
+            new PasswordHash("hash-new"),
+            false,
+            true,
+            Instant.parse("2026-03-20T10:00:00Z"),
+            createdAt,
+            secondUpdate,
+            Set.of(Role.admin(SystemRoleIds.ADMIN)));
 
     userRepository.save(updated);
 
@@ -120,10 +119,9 @@ class PostgresUserRepositoryAdapterIT {
     assertThat(persisted.updatedAt()).isEqualTo(secondUpdate);
     assertThat(persisted.roles()).extracting(Role::name).containsExactly("ADMIN");
 
-    Integer roleLinks = jdbcTemplate.queryForObject(
-        "SELECT COUNT(*) FROM auth_users_roles WHERE user_id = ?",
-        Integer.class,
-        id.value());
+    Integer roleLinks =
+        jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM auth_users_roles WHERE user_id = ?", Integer.class, id.value());
     assertThat(roleLinks).isEqualTo(1);
   }
 
@@ -131,8 +129,8 @@ class PostgresUserRepositoryAdapterIT {
   void setVerified_shouldUpdateVerificationFlagAndUpdatedAtTimestamp() {
     UserId id = new UserId(UUID.fromString("fce85bd9-702b-44a8-a874-415ec7da6b65"));
     Instant base = Instant.parse("2026-03-21T08:00:00Z");
-    User user = User.createNew(id, Email.of("verify-me@example.com"), new PasswordHash("hash"),
-        base);
+    User user =
+        User.createNew(id, Email.of("verify-me@example.com"), new PasswordHash("hash"), base);
     user.addRole(Role.user(SystemRoleIds.USER), base);
     userRepository.save(user);
 

@@ -4,8 +4,7 @@ public final class ErrorSanitizer {
 
   private static final int MAX_ERROR_LENGTH = 500;
 
-  private ErrorSanitizer() {
-  }
+  private ErrorSanitizer() {}
 
   public static String sanitize(RuntimeException exception, String sensitiveValue) {
     String error = exception.getClass().getSimpleName();

@@ -51,14 +51,11 @@ class IssueEmailVerificationServiceTest {
   private static final Email EMAIL = new Email("user@example.com");
   private static final String EMAIL_COMMANDS_TOPIC = "email-commands";
 
-  @Mock
-  private VerificationTokenRepositoryPort verificationTokenRepository;
+  @Mock private VerificationTokenRepositoryPort verificationTokenRepository;
 
-  @Mock
-  private OutboxRepositoryPort outboxRepository;
+  @Mock private OutboxRepositoryPort outboxRepository;
 
-  @Mock
-  private OtpGenerator otpGenerator;
+  @Mock private OtpGenerator otpGenerator;
 
   private ClockPort clock;
   private TokenHasher tokenHasher;
@@ -88,7 +85,7 @@ class IssueEmailVerificationServiceTest {
   void issue_shouldReturnNotIssuedAndSkipWrites_whenResendRateLimitApplies() {
     var activeToken = activeTokenWithLastSentAt(NOW.minusSeconds(30));
     when(verificationTokenRepository.findLatestActiveByUserId(
-        eq(USER_ID), eq(VerificationToken.Type.EMAIL_VERIFICATION), eq(NOW)))
+            eq(USER_ID), eq(VerificationToken.Type.EMAIL_VERIFICATION), eq(NOW)))
         .thenReturn(Optional.of(activeToken));
 
     var result = service.issue(USER_ID, EMAIL, "login", "corr-1");
@@ -97,8 +94,7 @@ class IssueEmailVerificationServiceTest {
     assertEquals(OTP_TTL.toSeconds(), result.ttlSeconds());
     assertFalse(result.issued());
 
-    verify(verificationTokenRepository, never())
-        .invalidateActiveTokens(any(), any(), any());
+    verify(verificationTokenRepository, never()).invalidateActiveTokens(any(), any(), any());
     verify(verificationTokenRepository, never()).saveNewToken(any());
     verify(outboxRepository, never()).insertPending(any());
   }
@@ -108,7 +104,7 @@ class IssueEmailVerificationServiceTest {
       throws Exception {
     var oldActiveToken = activeTokenWithLastSentAt(NOW.minus(RESEND_INTERVAL).minusSeconds(1));
     when(verificationTokenRepository.findLatestActiveByUserId(
-        eq(USER_ID), eq(VerificationToken.Type.EMAIL_VERIFICATION), eq(NOW)))
+            eq(USER_ID), eq(VerificationToken.Type.EMAIL_VERIFICATION), eq(NOW)))
         .thenReturn(Optional.of(oldActiveToken));
     when(otpGenerator.generate6Digits()).thenReturn("123456");
 
@@ -122,9 +118,10 @@ class IssueEmailVerificationServiceTest {
     var outboxCaptor = ArgumentCaptor.forClass(OutboxEvent.class);
 
     InOrder ordered = inOrder(verificationTokenRepository, outboxRepository);
-    ordered.verify(verificationTokenRepository)
-        .invalidateActiveTokens(eq(USER_ID), eq(VerificationToken.Type.EMAIL_VERIFICATION),
-            eq(NOW));
+    ordered
+        .verify(verificationTokenRepository)
+        .invalidateActiveTokens(
+            eq(USER_ID), eq(VerificationToken.Type.EMAIL_VERIFICATION), eq(NOW));
     ordered.verify(verificationTokenRepository).saveNewToken(tokenCaptor.capture());
     ordered.verify(outboxRepository).insertPending(outboxCaptor.capture());
 
@@ -142,8 +139,8 @@ class IssueEmailVerificationServiceTest {
     OutboxEvent outboxEvent = outboxCaptor.getValue();
     assertEquals("auth_user", outboxEvent.aggregateType());
     assertEquals(USER_ID.value(), outboxEvent.aggregateId());
-    assertEquals(EmailVerificationRequestedCommand.EMAIL_VERIFICATION_REQUESTED,
-        outboxEvent.eventType());
+    assertEquals(
+        EmailVerificationRequestedCommand.EMAIL_VERIFICATION_REQUESTED, outboxEvent.eventType());
     assertEquals(EMAIL_COMMANDS_TOPIC, outboxEvent.topic());
     assertEquals(USER_ID.value().toString(), outboxEvent.key());
     assertEquals(0, outboxEvent.attempts());
@@ -151,9 +148,11 @@ class IssueEmailVerificationServiceTest {
     assertEquals(NOW, outboxEvent.updatedAt());
 
     JsonNode payload = objectMapper.readTree(outboxEvent.payloadJson());
-    assertEquals(EmailVerificationRequestedCommand.EMAIL_VERIFICATION_REQUESTED,
+    assertEquals(
+        EmailVerificationRequestedCommand.EMAIL_VERIFICATION_REQUESTED,
         payload.get("type").asText());
-    assertEquals(EmailVerificationRequestedCommand.EMAIL_VERIFICATION_TEMPLATE,
+    assertEquals(
+        EmailVerificationRequestedCommand.EMAIL_VERIFICATION_TEMPLATE,
         payload.get("template").asText());
     assertEquals(USER_ID.value().toString(), payload.get("userId").asText());
     assertEquals(EMAIL.value(), payload.get("toEmail").asText());
@@ -168,7 +167,7 @@ class IssueEmailVerificationServiceTest {
   void issue_shouldNotRateLimit_whenLatestActiveTokenHasNullLastSentAt() {
     var activeWithoutLastSentAt = activeTokenWithLastSentAt(null);
     when(verificationTokenRepository.findLatestActiveByUserId(
-        eq(USER_ID), eq(VerificationToken.Type.EMAIL_VERIFICATION), eq(NOW)))
+            eq(USER_ID), eq(VerificationToken.Type.EMAIL_VERIFICATION), eq(NOW)))
         .thenReturn(Optional.of(activeWithoutLastSentAt));
     when(otpGenerator.generate6Digits()).thenReturn("654321");
 
@@ -176,8 +175,8 @@ class IssueEmailVerificationServiceTest {
 
     assertTrue(result.issued());
     verify(verificationTokenRepository)
-        .invalidateActiveTokens(eq(USER_ID), eq(VerificationToken.Type.EMAIL_VERIFICATION),
-            eq(NOW));
+        .invalidateActiveTokens(
+            eq(USER_ID), eq(VerificationToken.Type.EMAIL_VERIFICATION), eq(NOW));
     verify(verificationTokenRepository).saveNewToken(any());
     verify(outboxRepository).insertPending(any());
   }
@@ -186,12 +185,10 @@ class IssueEmailVerificationServiceTest {
   void issue_shouldThrowAndSkipOutboxInsert_whenPayloadSerializationFails() throws Exception {
     var failingMapper = org.mockito.Mockito.mock(ObjectMapper.class);
     when(verificationTokenRepository.findLatestActiveByUserId(
-        eq(USER_ID), eq(VerificationToken.Type.EMAIL_VERIFICATION), eq(NOW)))
+            eq(USER_ID), eq(VerificationToken.Type.EMAIL_VERIFICATION), eq(NOW)))
         .thenReturn(Optional.empty());
     when(otpGenerator.generate6Digits()).thenReturn("123456");
-    when(failingMapper.writeValueAsString(any()))
-        .thenThrow(new JsonProcessingException("boom") {
-        });
+    when(failingMapper.writeValueAsString(any())).thenThrow(new JsonProcessingException("boom") {});
 
     service =
         new IssueEmailVerificationService(
@@ -206,12 +203,11 @@ class IssueEmailVerificationServiceTest {
             EMAIL_COMMANDS_TOPIC);
 
     assertThrows(
-        IllegalStateException.class,
-        () -> service.issue(USER_ID, EMAIL, "register", "corr-4"));
+        IllegalStateException.class, () -> service.issue(USER_ID, EMAIL, "register", "corr-4"));
 
     verify(verificationTokenRepository)
-        .invalidateActiveTokens(eq(USER_ID), eq(VerificationToken.Type.EMAIL_VERIFICATION),
-            eq(NOW));
+        .invalidateActiveTokens(
+            eq(USER_ID), eq(VerificationToken.Type.EMAIL_VERIFICATION), eq(NOW));
     verify(verificationTokenRepository).saveNewToken(any());
     verify(outboxRepository, never()).insertPending(any());
   }

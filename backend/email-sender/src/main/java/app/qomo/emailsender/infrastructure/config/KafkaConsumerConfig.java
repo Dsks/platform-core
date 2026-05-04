@@ -52,8 +52,9 @@ public class KafkaConsumerConfig {
         new ConcurrentKafkaListenerContainerFactory<>();
     factory.setConsumerFactory(consumerFactory);
     factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
-    factory.setAutoStartup(Boolean.parseBoolean(
-        environment.getProperty("spring.kafka.listener.auto-startup", "true")));
+    factory.setAutoStartup(
+        Boolean.parseBoolean(
+            environment.getProperty("spring.kafka.listener.auto-startup", "true")));
     return factory;
   }
 }

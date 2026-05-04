@@ -117,8 +117,8 @@ public class CreateUserService implements CreateUserUseCase {
 
     if (requestedRoles.contains(ADMIN_ROLE)
         && !currentUser.roles().stream()
-        .map(role -> role.toUpperCase(Locale.ROOT))
-        .anyMatch(SUPERADMIN_ROLE::equals)) {
+            .map(role -> role.toUpperCase(Locale.ROOT))
+            .anyMatch(SUPERADMIN_ROLE::equals)) {
       throw new ForbiddenOperationException("Only SUPERADMIN can create ADMIN users");
     }
   }

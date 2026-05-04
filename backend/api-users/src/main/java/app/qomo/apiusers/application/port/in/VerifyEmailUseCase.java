@@ -4,9 +4,7 @@ import java.util.UUID;
 
 public interface VerifyEmailUseCase {
 
-  record Command(UUID sessionId, String code) {
-
-  }
+  record Command(UUID sessionId, String code) {}
 
   boolean verify(Command command);
 }

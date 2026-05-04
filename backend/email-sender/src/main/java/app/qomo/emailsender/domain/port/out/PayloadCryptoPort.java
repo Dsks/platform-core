@@ -6,7 +6,5 @@ public interface PayloadCryptoPort {
 
   byte[] decrypt(EncryptedPayload encrypted);
 
-  record EncryptedPayload(byte[] ciphertext, byte[] nonce) {
-
-  }
+  record EncryptedPayload(byte[] ciphertext, byte[] nonce) {}
 }

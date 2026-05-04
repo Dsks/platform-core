@@ -17,8 +17,8 @@ public class KafkaOutboxPublisherAdapter implements OutboxEventPublisherPort {
   private final KafkaTemplate<String, String> kafkaTemplate;
   private final ObjectMapper objectMapper;
 
-  public KafkaOutboxPublisherAdapter(KafkaTemplate<String, String> kafkaTemplate,
-      ObjectMapper objectMapper) {
+  public KafkaOutboxPublisherAdapter(
+      KafkaTemplate<String, String> kafkaTemplate, ObjectMapper objectMapper) {
     this.kafkaTemplate = kafkaTemplate;
     this.objectMapper = objectMapper;
   }

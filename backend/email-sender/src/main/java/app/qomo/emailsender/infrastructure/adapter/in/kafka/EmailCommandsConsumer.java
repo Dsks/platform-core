@@ -28,7 +28,9 @@ public class EmailCommandsConsumer {
   private final ObjectMapper objectMapper;
   private final ProcessEmailCommandUseCase processEmailCommandUseCase;
 
-  public EmailCommandsConsumer(HashUtil hashUtil, ObjectMapper objectMapper,
+  public EmailCommandsConsumer(
+      HashUtil hashUtil,
+      ObjectMapper objectMapper,
       ProcessEmailCommandUseCase processEmailCommandUseCase) {
     this.hashUtil = hashUtil;
     this.objectMapper = objectMapper;
@@ -71,8 +73,8 @@ public class EmailCommandsConsumer {
     }
 
     try {
-      EmailCommandProcessingOutcome outcome = processEmailCommandUseCase.process(message,
-          safePayload);
+      EmailCommandProcessingOutcome outcome =
+          processEmailCommandUseCase.process(message, safePayload);
       decision = ackDecisionFor(outcome);
     } catch (InvalidEmailCommandException exception) {
       log.warn(

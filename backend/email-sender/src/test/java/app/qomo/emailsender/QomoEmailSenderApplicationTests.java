@@ -11,6 +11,5 @@ import org.springframework.test.context.ActiveProfiles;
 class QomoEmailSenderApplicationTests {
 
   @Test
-  void contextLoads() {
-  }
+  void contextLoads() {}
 }

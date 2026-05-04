@@ -6,8 +6,7 @@ import java.util.HexFormat;
 
 public final class PiiUtil {
 
-  private PiiUtil() {
-  }
+  private PiiUtil() {}
 
   public static String emailFingerprint(String email) {
     if (email == null) {

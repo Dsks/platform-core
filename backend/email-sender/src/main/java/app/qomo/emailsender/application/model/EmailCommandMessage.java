@@ -8,6 +8,4 @@ public record EmailCommandMessage(
     String toEmail,
     String verificationCode,
     String template,
-    String type) {
-
-}
+    String type) {}

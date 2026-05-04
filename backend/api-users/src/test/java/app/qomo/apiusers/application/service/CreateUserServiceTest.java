@@ -46,39 +46,30 @@ class CreateUserServiceTest {
 
   private static final Instant NOW = Instant.parse("2026-03-25T12:30:00Z");
 
-  @Mock
-  private UserRepositoryPort userRepository;
+  @Mock private UserRepositoryPort userRepository;
 
-  @Mock
-  private RoleRepositoryPort roleRepository;
+  @Mock private RoleRepositoryPort roleRepository;
 
-  @Mock
-  private PasswordHasherPort passwordHasher;
+  @Mock private PasswordHasherPort passwordHasher;
 
-  @Mock
-  private UserEventPublisherPort eventPublisher;
+  @Mock private UserEventPublisherPort eventPublisher;
 
-  @Mock
-  private CurrentUserPort currentUser;
+  @Mock private CurrentUserPort currentUser;
 
   private CreateUserService service;
 
   @BeforeEach
   void setUp() {
     ClockPort clock = () -> NOW;
-    service = new CreateUserService(
-        userRepository,
-        roleRepository,
-        passwordHasher,
-        eventPublisher,
-        clock,
-        currentUser);
+    service =
+        new CreateUserService(
+            userRepository, roleRepository, passwordHasher, eventPublisher, clock, currentUser);
   }
 
   @Test
   void create_shouldPersistAndPublishEvent_whenActorCanCreateAdmin() {
-    var command = new CreateUserUseCase.Command("Admin.Candidate@Example.com", "secret",
-        Set.of("ADMIN"));
+    var command =
+        new CreateUserUseCase.Command("Admin.Candidate@Example.com", "secret", Set.of("ADMIN"));
     var hash = new PasswordHash("hashed-password");
     var adminRole = Role.admin(new RoleId(UUID.fromString("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")));
 
@@ -109,10 +100,11 @@ class CreateUserServiceTest {
 
   @Test
   void create_shouldNormalizeRolesAndRemoveDuplicates_whenCreationProceeds() {
-    var command = new CreateUserUseCase.Command(
-        "user@example.com",
-        "pwd",
-        new LinkedHashSet<>(java.util.Arrays.asList(" user ", "USER", " ", null)));
+    var command =
+        new CreateUserUseCase.Command(
+            "user@example.com",
+            "pwd",
+            new LinkedHashSet<>(java.util.Arrays.asList(" user ", "USER", " ", null)));
     var hash = new PasswordHash("hash-1");
     var userRole = Role.user(new RoleId(UUID.fromString("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb")));
 
@@ -135,10 +127,11 @@ class CreateUserServiceTest {
   @Test
   void create_shouldUseDefaultUserRole_whenRolesAreNullOrBlankOnly() {
     var nullRolesCommand = new CreateUserUseCase.Command("one@example.com", "pwd", null);
-    var blankRolesCommand = new CreateUserUseCase.Command(
-        "two@example.com",
-        "pwd",
-        new LinkedHashSet<>(java.util.Arrays.asList(" ", "\t", null)));
+    var blankRolesCommand =
+        new CreateUserUseCase.Command(
+            "two@example.com",
+            "pwd",
+            new LinkedHashSet<>(java.util.Arrays.asList(" ", "\t", null)));
     var hash = new PasswordHash("hash-default");
     var userRole = Role.user(new RoleId(UUID.fromString("cccccccc-cccc-4ccc-8ccc-cccccccccccc")));
 
@@ -174,16 +167,16 @@ class CreateUserServiceTest {
 
   @Test
   void create_shouldRejectTargetRolesOutsideAllowedAdministrativeSet() {
-    var command = new CreateUserUseCase.Command("candidate@example.com", "pwd",
-        Set.of("SUPERADMIN"));
+    var command =
+        new CreateUserUseCase.Command("candidate@example.com", "pwd", Set.of("SUPERADMIN"));
 
     when(userRepository.existsByEmail("candidate@example.com")).thenReturn(false);
 
     var ex = assertThrows(ForbiddenOperationException.class, () -> service.create(command));
 
     assertEquals("FORBIDDEN_OPERATION", ex.code());
-    assertEquals("Target role is not allowed for administrative creation",
-        ex.params().get("reason"));
+    assertEquals(
+        "Target role is not allowed for administrative creation", ex.params().get("reason"));
     verify(currentUser, never()).roles();
     verify(passwordHasher, never()).hash(any());
     verify(userRepository, never()).save(any());
@@ -226,8 +219,7 @@ class CreateUserServiceTest {
   @ParameterizedTest
   @MethodSource("invalidCommands")
   void create_shouldRejectInvalidCommands_andSkipSideEffects(
-      CreateUserUseCase.Command command,
-      String expectedField) {
+      CreateUserUseCase.Command command, String expectedField) {
 
     var ex = assertThrows(InvalidCommandException.class, () -> service.create(command));
 
@@ -246,7 +238,8 @@ class CreateUserServiceTest {
     return java.util.stream.Stream.of(
         Arguments.of(null, "command"),
         Arguments.of(new CreateUserUseCase.Command(null, "pwd", Set.of("USER")), "email"),
-        Arguments.of(new CreateUserUseCase.Command("person@example.com", null, Set.of("USER")),
+        Arguments.of(
+            new CreateUserUseCase.Command("person@example.com", null, Set.of("USER")),
             "rawPassword"));
   }
 }

@@ -41,35 +41,28 @@ import org.springframework.test.web.servlet.MockMvc;
 @Import(ApiExceptionHandler.class)
 @TestPropertySource(
     properties = {
-        "qomo.security.cookie.secure=true",
-        "qomo.security.cookie.same-site=Strict",
-        "qomo.security.verification.cookie.name=QOMO_VERIF_TEST",
-        "qomo.security.verification.cookie.secure=true",
-        "qomo.security.verification.cookie.same-site=None",
-        "qomo.security.jwt.expiration-ms=120000"
+      "qomo.security.cookie.secure=true",
+      "qomo.security.cookie.same-site=Strict",
+      "qomo.security.verification.cookie.name=QOMO_VERIF_TEST",
+      "qomo.security.verification.cookie.secure=true",
+      "qomo.security.verification.cookie.same-site=None",
+      "qomo.security.jwt.expiration-ms=120000"
     })
 class AuthVerifyHttpContractTest {
 
-  @Autowired
-  private MockMvc mockMvc;
+  @Autowired private MockMvc mockMvc;
 
-  @MockitoBean
-  private LoginUseCase loginUseCase;
+  @MockitoBean private LoginUseCase loginUseCase;
 
-  @MockitoBean
-  private RegisterUserUseCase registerUserUseCase;
+  @MockitoBean private RegisterUserUseCase registerUserUseCase;
 
-  @MockitoBean
-  private VerifyEmailUseCase verifyEmailUseCase;
+  @MockitoBean private VerifyEmailUseCase verifyEmailUseCase;
 
-  @MockitoBean
-  private ResendEmailVerificationUseCase resendEmailVerificationUseCase;
+  @MockitoBean private ResendEmailVerificationUseCase resendEmailVerificationUseCase;
 
-  @MockitoBean
-  private JwtTokenProviderPort jwtTokenProvider;
+  @MockitoBean private JwtTokenProviderPort jwtTokenProvider;
 
-  @MockitoBean
-  private ClockPort clock;
+  @MockitoBean private ClockPort clock;
 
   @Test
   void login_shouldReturn204AndEmitAuthCookie_whenCredentialsAreValid() throws Exception {
@@ -211,8 +204,8 @@ class AuthVerifyHttpContractTest {
 
   @Test
   void register_shouldReturnGenericAcceptedResponse_whenEmailAlreadyExists() throws Exception {
-    when(registerUserUseCase.register(any())).thenThrow(
-        new EmailAlreadyInUseException("used@example.com"));
+    when(registerUserUseCase.register(any()))
+        .thenThrow(new EmailAlreadyInUseException("used@example.com"));
 
     mockMvc
         .perform(

@@ -21,8 +21,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 @ExtendWith(MockitoExtension.class)
 class SmtpEmailSenderAdapterTest {
 
-  @Mock
-  private JavaMailSender javaMailSender;
+  @Mock private JavaMailSender javaMailSender;
 
   private SmtpEmailSenderAdapter adapter;
 
@@ -44,20 +43,21 @@ class SmtpEmailSenderAdapterTest {
     assertEquals(1, from.length);
     assertEquals("noreply@qomo.app", from[0].toString());
     assertEquals("Welcome", mimeMessage.getSubject());
-    assertEquals("user@example.com",
-        mimeMessage.getRecipients(Message.RecipientType.TO)[0].toString());
+    assertEquals(
+        "user@example.com", mimeMessage.getRecipients(Message.RecipientType.TO)[0].toString());
     assertEquals("<h1>Hello</h1>", mimeMessage.getContent().toString().trim());
   }
 
   @Test
   void sendHtml_invalidConfiguredFromEmail_wrapsMessagingFailureAsIllegalState() {
-    SmtpEmailSenderAdapter adapterWithInvalidFrom = new SmtpEmailSenderAdapter(
-        javaMailSender,
-        "bad\r\naddress");
+    SmtpEmailSenderAdapter adapterWithInvalidFrom =
+        new SmtpEmailSenderAdapter(javaMailSender, "bad\r\naddress");
     when(javaMailSender.createMimeMessage()).thenReturn(new MimeMessage((Session) null));
 
-    IllegalStateException exception = assertThrows(IllegalStateException.class,
-        () -> adapterWithInvalidFrom.sendHtml("user@example.com", "Welcome", "<h1>Hello</h1>"));
+    IllegalStateException exception =
+        assertThrows(
+            IllegalStateException.class,
+            () -> adapterWithInvalidFrom.sendHtml("user@example.com", "Welcome", "<h1>Hello</h1>"));
 
     assertEquals("Unable to build email message", exception.getMessage());
   }

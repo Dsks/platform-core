@@ -24,8 +24,7 @@ import org.springframework.kafka.support.SendResult;
 @ExtendWith(MockitoExtension.class)
 class KafkaOutboxPublisherAdapterTest {
 
-  @Mock
-  private KafkaTemplate<String, String> kafkaTemplate;
+  @Mock private KafkaTemplate<String, String> kafkaTemplate;
 
   private KafkaOutboxPublisherAdapter adapter;
 
@@ -36,11 +35,12 @@ class KafkaOutboxPublisherAdapterTest {
 
   @Test
   void publish_shouldSendEventAndComplete_whenKafkaAndPayloadParsingSucceed() {
-    var event = validEventWithPayload(
-        "{\"eventId\":\"evt-1\",\"correlationId\":\"cor-1\",\"fingerprint\":\"fp-1\"}");
+    var event =
+        validEventWithPayload(
+            "{\"eventId\":\"evt-1\",\"correlationId\":\"cor-1\",\"fingerprint\":\"fp-1\"}");
     var sendFuture = CompletableFuture.<SendResult<String, String>>completedFuture(null);
-    when(kafkaTemplate.send(event.topic(), event.key(), event.payloadJson())).thenReturn(
-        sendFuture);
+    when(kafkaTemplate.send(event.topic(), event.key(), event.payloadJson()))
+        .thenReturn(sendFuture);
 
     assertThatCode(() -> adapter.publish(event)).doesNotThrowAnyException();
 
@@ -52,10 +52,10 @@ class KafkaOutboxPublisherAdapterTest {
     var event = validEventWithPayload("{\"eventId\":\"evt-2\"}");
     CompletableFuture<SendResult<String, String>> sendFuture = mock(CompletableFuture.class);
 
-    when(kafkaTemplate.send(event.topic(), event.key(), event.payloadJson())).thenReturn(
-        sendFuture);
-    when(sendFuture.get()).thenThrow(
-        new ExecutionException(new RuntimeException("kafka unavailable")));
+    when(kafkaTemplate.send(event.topic(), event.key(), event.payloadJson()))
+        .thenReturn(sendFuture);
+    when(sendFuture.get())
+        .thenThrow(new ExecutionException(new RuntimeException("kafka unavailable")));
 
     assertThatThrownBy(() -> adapter.publish(event))
         .isInstanceOf(IllegalStateException.class)
@@ -68,8 +68,8 @@ class KafkaOutboxPublisherAdapterTest {
     var event = validEventWithPayload("{\"eventId\":\"evt-3\"}");
     CompletableFuture<SendResult<String, String>> sendFuture = mock(CompletableFuture.class);
 
-    when(kafkaTemplate.send(event.topic(), event.key(), event.payloadJson())).thenReturn(
-        sendFuture);
+    when(kafkaTemplate.send(event.topic(), event.key(), event.payloadJson()))
+        .thenReturn(sendFuture);
     when(sendFuture.get()).thenThrow(new InterruptedException("interrupted"));
 
     try {
@@ -87,8 +87,8 @@ class KafkaOutboxPublisherAdapterTest {
   void publish_shouldWrapPayloadParsingErrorAfterSuccessfulSend() {
     var event = validEventWithPayload("not-json");
     var sendFuture = CompletableFuture.<SendResult<String, String>>completedFuture(null);
-    when(kafkaTemplate.send(event.topic(), event.key(), event.payloadJson())).thenReturn(
-        sendFuture);
+    when(kafkaTemplate.send(event.topic(), event.key(), event.payloadJson()))
+        .thenReturn(sendFuture);
 
     assertThatThrownBy(() -> adapter.publish(event))
         .isInstanceOf(IllegalStateException.class)

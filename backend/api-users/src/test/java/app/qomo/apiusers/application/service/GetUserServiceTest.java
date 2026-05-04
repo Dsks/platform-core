@@ -24,8 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class GetUserServiceTest {
 
-  @Mock
-  private UserRepositoryPort userRepository;
+  @Mock private UserRepositoryPort userRepository;
 
   private GetUserService service;
 

@@ -23,20 +23,20 @@ class AesGcmPayloadCryptoAdapterTest {
 
   @Test
   void constructor_withKeyDecodedLengthDifferentThan32_throwsIllegalArgumentException() {
-    String shortKeyB64 = Base64.getEncoder()
-        .encodeToString("short-key".getBytes(StandardCharsets.UTF_8));
+    String shortKeyB64 =
+        Base64.getEncoder().encodeToString("short-key".getBytes(StandardCharsets.UTF_8));
 
     IllegalArgumentException exception =
-        assertThrows(IllegalArgumentException.class,
-            () -> new AesGcmPayloadCryptoAdapter(shortKeyB64));
+        assertThrows(
+            IllegalArgumentException.class, () -> new AesGcmPayloadCryptoAdapter(shortKeyB64));
 
     assertNotEquals(-1, exception.getMessage().indexOf("must decode to 32 bytes"));
   }
 
   @Test
   void constructor_withMalformedBase64_throwsIllegalArgumentException() {
-    assertThrows(IllegalArgumentException.class,
-        () -> new AesGcmPayloadCryptoAdapter("###not-base64###"));
+    assertThrows(
+        IllegalArgumentException.class, () -> new AesGcmPayloadCryptoAdapter("###not-base64###"));
   }
 
   @Test
@@ -48,8 +48,10 @@ class AesGcmPayloadCryptoAdapterTest {
     byte[] tamperedCiphertext = encrypted.ciphertext().clone();
     tamperedCiphertext[0] = (byte) (tamperedCiphertext[0] ^ 0x01);
 
-    IllegalStateException exception = assertThrows(IllegalStateException.class,
-        () -> adapter.decrypt(new EncryptedPayload(tamperedCiphertext, encrypted.nonce())));
+    IllegalStateException exception =
+        assertThrows(
+            IllegalStateException.class,
+            () -> adapter.decrypt(new EncryptedPayload(tamperedCiphertext, encrypted.nonce())));
 
     assertNotEquals(-1, exception.getMessage().indexOf("payload_decrypt_failed"));
   }
@@ -63,7 +65,8 @@ class AesGcmPayloadCryptoAdapterTest {
     byte[] tamperedNonce = encrypted.nonce().clone();
     tamperedNonce[0] = (byte) (tamperedNonce[0] ^ 0x01);
 
-    assertThrows(IllegalStateException.class,
+    assertThrows(
+        IllegalStateException.class,
         () -> adapter.decrypt(new EncryptedPayload(encrypted.ciphertext(), tamperedNonce)));
   }
 

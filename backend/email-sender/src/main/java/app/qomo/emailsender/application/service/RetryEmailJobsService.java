@@ -88,16 +88,17 @@ public class RetryEmailJobsService implements RetryEmailJobsUseCase {
         job.toEmailFp());
 
     try {
-      byte[] decrypted = payloadCrypto.decrypt(
-          new PayloadCryptoPort.EncryptedPayload(job.payloadEnc(), job.payloadNonce())
-      );
+      byte[] decrypted =
+          payloadCrypto.decrypt(
+              new PayloadCryptoPort.EncryptedPayload(job.payloadEnc(), job.payloadNonce()));
       EmailCommandMessage message =
-          objectMapper.readValue(new String(decrypted, StandardCharsets.UTF_8),
-              EmailCommandMessage.class);
+          objectMapper.readValue(
+              new String(decrypted, StandardCharsets.UTF_8), EmailCommandMessage.class);
 
-      String html = templateRenderer.render(
-          message.template(),
-          Map.of("verificationCode", message.verificationCode(), "appName", appName));
+      String html =
+          templateRenderer.render(
+              message.template(),
+              Map.of("verificationCode", message.verificationCode(), "appName", appName));
       emailSender.sendHtml(message.toEmail(), verificationSubject, html);
       emailJobRepository.markSent(job.eventId(), now);
     } catch (Exception exception) {

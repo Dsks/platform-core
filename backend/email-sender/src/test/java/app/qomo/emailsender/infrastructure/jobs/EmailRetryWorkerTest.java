@@ -15,8 +15,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 @ExtendWith(MockitoExtension.class)
 class EmailRetryWorkerTest {
 
-  @Mock
-  private RetryEmailJobsUseCase retryEmailJobsUseCase;
+  @Mock private RetryEmailJobsUseCase retryEmailJobsUseCase;
 
   @Test
   void retryFailedJobs_whenTriggered_delegatesToUseCase() {

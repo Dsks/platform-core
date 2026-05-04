@@ -57,8 +57,8 @@ public class OutboxPublisherJob {
           log.warn("outbox_event_dead outboxId={} aggregateId={}", event.id(), event.aggregateId());
         } else {
           outboxRepository.markFailed(event.id(), message, now);
-          log.warn("outbox_event_failed outboxId={} aggregateId={}", event.id(),
-              event.aggregateId());
+          log.warn(
+              "outbox_event_failed outboxId={} aggregateId={}", event.id(), event.aggregateId());
         }
       }
     }

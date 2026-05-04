@@ -5,13 +5,9 @@ import java.util.Set;
 
 public interface CreateUserUseCase {
 
-  record Command(String email, String rawPassword, Set<String> roles) {
+  record Command(String email, String rawPassword, Set<String> roles) {}
 
-  }
-
-  record Result(UserId id) {
-
-  }
+  record Result(UserId id) {}
 
   Result create(Command command);
 }

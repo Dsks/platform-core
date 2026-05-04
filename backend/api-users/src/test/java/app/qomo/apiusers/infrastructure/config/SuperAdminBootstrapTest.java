@@ -32,14 +32,11 @@ class SuperAdminBootstrapTest {
   private static final Instant NOW = Instant.parse("2026-04-09T12:00:00Z");
   private static final String SUPERADMIN_EMAIL = "superadmin@qomo.app";
 
-  @Mock
-  private UserRepositoryPort userRepository;
+  @Mock private UserRepositoryPort userRepository;
 
-  @Mock
-  private RoleRepositoryPort roleRepository;
+  @Mock private RoleRepositoryPort roleRepository;
 
-  @Mock
-  private PasswordHasherPort passwordHasher;
+  @Mock private PasswordHasherPort passwordHasher;
 
   private ClockPort clock;
 
@@ -101,7 +98,7 @@ class SuperAdminBootstrapTest {
     when(roleRepository.findByName("SUPERADMIN")).thenReturn(Optional.empty());
 
     assertThatThrownBy(
-        () -> bootstrap("bootstrap-secret").run(new DefaultApplicationArguments(new String[0])))
+            () -> bootstrap("bootstrap-secret").run(new DefaultApplicationArguments(new String[0])))
         .isInstanceOf(RoleNotFoundException.class)
         .hasMessageContaining("Role not found");
 
@@ -110,11 +107,6 @@ class SuperAdminBootstrapTest {
 
   private SuperAdminBootstrap bootstrap(String initialPassword) {
     return new SuperAdminBootstrap(
-        userRepository,
-        roleRepository,
-        passwordHasher,
-        clock,
-        initialPassword,
-        SUPERADMIN_EMAIL);
+        userRepository, roleRepository, passwordHasher, clock, initialPassword, SUPERADMIN_EMAIL);
   }
 }

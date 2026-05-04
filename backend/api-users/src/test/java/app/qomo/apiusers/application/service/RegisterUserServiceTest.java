@@ -44,29 +44,22 @@ class RegisterUserServiceTest {
 
   private static final Instant NOW = Instant.parse("2026-03-20T08:00:00Z");
 
-  @Mock
-  private UserRepositoryPort userRepository;
+  @Mock private UserRepositoryPort userRepository;
 
-  @Mock
-  private RoleRepositoryPort roleRepository;
+  @Mock private RoleRepositoryPort roleRepository;
 
-  @Mock
-  private PasswordHasherPort passwordHasher;
+  @Mock private PasswordHasherPort passwordHasher;
 
-  @Mock
-  private IssueEmailVerificationService issueEmailVerificationService;
+  @Mock private IssueEmailVerificationService issueEmailVerificationService;
 
   private RegisterUserService service;
 
   @BeforeEach
   void setUp() {
     ClockPort clock = () -> NOW;
-    service = new RegisterUserService(
-        userRepository,
-        roleRepository,
-        passwordHasher,
-        clock,
-        issueEmailVerificationService);
+    service =
+        new RegisterUserService(
+            userRepository, roleRepository, passwordHasher, clock, issueEmailVerificationService);
   }
 
   @Test
@@ -95,9 +88,13 @@ class RegisterUserServiceTest {
     ordered.verify(userRepository).findByEmail("new.user@example.com");
     ordered.verify(roleRepository).findByName("USER");
     ordered.verify(userRepository).save(userCaptor.capture());
-    ordered.verify(issueEmailVerificationService)
-        .issue(eq(userCaptor.getValue().id()), eq(new Email("new.user@example.com")),
-            eq("REGISTER_NEW"), requestIdCaptor.capture());
+    ordered
+        .verify(issueEmailVerificationService)
+        .issue(
+            eq(userCaptor.getValue().id()),
+            eq(new Email("new.user@example.com")),
+            eq("REGISTER_NEW"),
+            requestIdCaptor.capture());
 
     var savedUser = userCaptor.getValue();
     assertEquals("new.user@example.com", savedUser.email().value());
@@ -134,11 +131,13 @@ class RegisterUserServiceTest {
     var command = new RegisterUserUseCase.Command("existing@example.com", "still-irrelevant");
     var issuedSessionId = UUID.fromString("55555555-5555-4555-8555-555555555555");
 
-    when(userRepository.findByEmail("existing@example.com")).thenReturn(
-        Optional.of(unverifiedUser));
-    when(issueEmailVerificationService.issue(eq(unverifiedUser.id()),
-        eq(new Email("existing@example.com")),
-        eq("REGISTER_EXISTING_UNVERIFIED"), any()))
+    when(userRepository.findByEmail("existing@example.com"))
+        .thenReturn(Optional.of(unverifiedUser));
+    when(issueEmailVerificationService.issue(
+            eq(unverifiedUser.id()),
+            eq(new Email("existing@example.com")),
+            eq("REGISTER_EXISTING_UNVERIFIED"),
+            any()))
         .thenReturn(new IssueEmailVerificationService.IssueResult(issuedSessionId, 300, true));
 
     var result = service.register(command);
@@ -151,8 +150,11 @@ class RegisterUserServiceTest {
     verify(roleRepository, never()).findByName(any());
     verify(userRepository, never()).save(any());
     verify(issueEmailVerificationService)
-        .issue(eq(unverifiedUser.id()), eq(new Email("existing@example.com")),
-            eq("REGISTER_EXISTING_UNVERIFIED"), eq(result.requestId()));
+        .issue(
+            eq(unverifiedUser.id()),
+            eq(new Email("existing@example.com")),
+            eq("REGISTER_EXISTING_UNVERIFIED"),
+            eq(result.requestId()));
   }
 
   @Test
@@ -174,9 +176,7 @@ class RegisterUserServiceTest {
   @ParameterizedTest
   @MethodSource("invalidCommands")
   void register_shouldRejectInvalidCommands_andSkipAllSideEffects(
-      RegisterUserUseCase.Command command,
-      String expectedField,
-      String expectedReason) {
+      RegisterUserUseCase.Command command, String expectedField, String expectedReason) {
 
     var ex = assertThrows(InvalidCommandException.class, () -> service.register(command));
 
@@ -195,12 +195,12 @@ class RegisterUserServiceTest {
     return java.util.stream.Stream.of(
         Arguments.of(null, "command", "missing"),
         Arguments.of(new RegisterUserUseCase.Command(null, "secret"), "email", "missing"),
-        Arguments.of(new RegisterUserUseCase.Command("user@example.com", null), "rawPassword",
-            "missing"),
-        Arguments.of(new RegisterUserUseCase.Command("user@example.com", "   "), "rawPassword",
-            "blank"),
-        Arguments.of(new RegisterUserUseCase.Command("invalid-email", "secret"), "email",
-            "invalid"));
+        Arguments.of(
+            new RegisterUserUseCase.Command("user@example.com", null), "rawPassword", "missing"),
+        Arguments.of(
+            new RegisterUserUseCase.Command("user@example.com", "   "), "rawPassword", "blank"),
+        Arguments.of(
+            new RegisterUserUseCase.Command("invalid-email", "secret"), "email", "invalid"));
   }
 
   private static User existingUser(boolean verified) {

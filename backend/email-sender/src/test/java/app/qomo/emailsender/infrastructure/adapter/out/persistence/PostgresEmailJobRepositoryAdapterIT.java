@@ -28,11 +28,9 @@ import org.springframework.test.context.ActiveProfiles;
 @Import(TestContainersConfig.class)
 class PostgresEmailJobRepositoryAdapterIT {
 
-  @Autowired
-  private PostgresEmailJobRepositoryAdapter repository;
+  @Autowired private PostgresEmailJobRepositoryAdapter repository;
 
-  @Autowired
-  private JdbcTemplate jdbcTemplate;
+  @Autowired private JdbcTemplate jdbcTemplate;
 
   @BeforeEach
   void cleanTable() {
@@ -43,18 +41,19 @@ class PostgresEmailJobRepositoryAdapterIT {
   void tryCreatePending_persistsInitialJobAndReturnsTrue() {
     UUID eventId = UUID.fromString("4ce6a6cb-e7b9-4dce-b722-6314e48d5406");
     Instant now = Instant.parse("2026-03-15T10:15:30Z");
-    byte[] payloadEnc = new byte[]{1, 2, 3};
-    byte[] payloadNonce = new byte[]{9, 8, 7};
+    byte[] payloadEnc = new byte[] {1, 2, 3};
+    byte[] payloadNonce = new byte[] {9, 8, 7};
 
-    boolean created = repository.tryCreatePending(
-        eventId,
-        "corr-100",
-        "EMAIL_VERIFICATION_REQUESTED",
-        "EMAIL_VERIFICATION",
-        "fp-100",
-        payloadEnc,
-        payloadNonce,
-        now);
+    boolean created =
+        repository.tryCreatePending(
+            eventId,
+            "corr-100",
+            "EMAIL_VERIFICATION_REQUESTED",
+            "EMAIL_VERIFICATION",
+            "fp-100",
+            payloadEnc,
+            payloadNonce,
+            now);
 
     assertTrue(created);
 
@@ -75,33 +74,34 @@ class PostgresEmailJobRepositoryAdapterIT {
     Instant originalNow = Instant.parse("2026-03-15T10:00:00Z");
     Instant duplicateNow = Instant.parse("2026-03-15T12:00:00Z");
 
-    boolean firstInsert = repository.tryCreatePending(
-        eventId,
-        "corr-original",
-        "EMAIL_VERIFICATION_REQUESTED",
-        "EMAIL_VERIFICATION",
-        "fp-original",
-        new byte[]{1, 1, 1},
-        new byte[]{2, 2, 2},
-        originalNow);
+    boolean firstInsert =
+        repository.tryCreatePending(
+            eventId,
+            "corr-original",
+            "EMAIL_VERIFICATION_REQUESTED",
+            "EMAIL_VERIFICATION",
+            "fp-original",
+            new byte[] {1, 1, 1},
+            new byte[] {2, 2, 2},
+            originalNow);
 
-    boolean duplicatedInsert = repository.tryCreatePending(
-        eventId,
-        "corr-duplicate",
-        "OTHER_TYPE",
-        "OTHER_TEMPLATE",
-        "fp-duplicate",
-        new byte[]{9, 9, 9},
-        new byte[]{8, 8, 8},
-        duplicateNow);
+    boolean duplicatedInsert =
+        repository.tryCreatePending(
+            eventId,
+            "corr-duplicate",
+            "OTHER_TYPE",
+            "OTHER_TEMPLATE",
+            "fp-duplicate",
+            new byte[] {9, 9, 9},
+            new byte[] {8, 8, 8},
+            duplicateNow);
 
     assertTrue(firstInsert);
     assertFalse(duplicatedInsert);
 
-    Integer count = jdbcTemplate.queryForObject(
-        "SELECT COUNT(*) FROM email_jobs WHERE event_id = ?",
-        Integer.class,
-        eventId);
+    Integer count =
+        jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM email_jobs WHERE event_id = ?", Integer.class, eventId);
     assertEquals(1, count);
 
     Map<String, Object> row = findRow(eventId);
@@ -111,8 +111,8 @@ class PostgresEmailJobRepositoryAdapterIT {
     assertEquals("fp-original", row.get("to_email_fp"));
     assertEquals(Timestamp.from(originalNow), row.get("created_at"));
     assertEquals(Timestamp.from(originalNow), row.get("updated_at"));
-    assertArrayEquals(new byte[]{1, 1, 1}, (byte[]) row.get("payload_enc"));
-    assertArrayEquals(new byte[]{2, 2, 2}, (byte[]) row.get("payload_nonce"));
+    assertArrayEquals(new byte[] {1, 1, 1}, (byte[]) row.get("payload_enc"));
+    assertArrayEquals(new byte[] {2, 2, 2}, (byte[]) row.get("payload_nonce"));
   }
 
   @Test
@@ -121,37 +121,54 @@ class PostgresEmailJobRepositoryAdapterIT {
     Instant olderThan = base.minusSeconds(120);
     Instant claimNow = base;
 
-    UUID eligibleFailed = insertJob(
-        UUID.fromString("44f4e700-f3d1-4f4f-9a45-1d4d59f638e8"),
-        "FAILED",
-        1,
-        olderThan.minusSeconds(5),
-        null);
+    UUID eligibleFailed =
+        insertJob(
+            UUID.fromString("44f4e700-f3d1-4f4f-9a45-1d4d59f638e8"),
+            "FAILED",
+            1,
+            olderThan.minusSeconds(5),
+            null);
 
-    UUID eligiblePending = insertJob(
-        UUID.fromString("d7f4cd5d-70ef-4dc5-9658-2e62a9c57240"),
-        "PENDING",
-        0,
+    UUID eligiblePending =
+        insertJob(
+            UUID.fromString("d7f4cd5d-70ef-4dc5-9658-2e62a9c57240"),
+            "PENDING",
+            0,
+            olderThan.minusSeconds(10),
+            null);
+
+    insertJob(
+        UUID.fromString("2c35d4df-09cb-4f08-8f68-5ce6dc6fcd42"),
+        "FAILED",
+        3,
         olderThan.minusSeconds(10),
         null);
-
-    insertJob(UUID.fromString("2c35d4df-09cb-4f08-8f68-5ce6dc6fcd42"), "FAILED", 3,
-        olderThan.minusSeconds(10), null);
-    insertJob(UUID.fromString("84b6e2ec-c9f0-40dd-bf0b-b7ca2136ea7e"), "FAILED", 1,
-        olderThan.plusSeconds(30), null);
-    insertJob(UUID.fromString("cb8cf2d6-f3f8-4234-8e53-a85090af2cf8"), "SENT", 0,
-        olderThan.minusSeconds(10), base.minusSeconds(10));
+    insertJob(
+        UUID.fromString("84b6e2ec-c9f0-40dd-bf0b-b7ca2136ea7e"),
+        "FAILED",
+        1,
+        olderThan.plusSeconds(30),
+        null);
+    insertJob(
+        UUID.fromString("cb8cf2d6-f3f8-4234-8e53-a85090af2cf8"),
+        "SENT",
+        0,
+        olderThan.minusSeconds(10),
+        base.minusSeconds(10));
 
     List<EmailJobRecord> claimed = repository.claimRetryCandidates(3, olderThan, 10, claimNow);
 
     assertEquals(2, claimed.size());
-    List<UUID> claimedIds = claimed.stream()
-        .map(EmailJobRecord::eventId)
-        .sorted(Comparator.comparing(UUID::toString))
-        .toList();
-    assertEquals(List.of(eligiblePending, eligibleFailed).stream()
-        .sorted(Comparator.comparing(UUID::toString))
-        .toList(), claimedIds);
+    List<UUID> claimedIds =
+        claimed.stream()
+            .map(EmailJobRecord::eventId)
+            .sorted(Comparator.comparing(UUID::toString))
+            .toList();
+    assertEquals(
+        List.of(eligiblePending, eligibleFailed).stream()
+            .sorted(Comparator.comparing(UUID::toString))
+            .toList(),
+        claimedIds);
 
     for (UUID eventId : claimedIds) {
       Map<String, Object> row = findRow(eventId);
@@ -164,37 +181,40 @@ class PostgresEmailJobRepositoryAdapterIT {
     Instant olderThan = Instant.parse("2026-03-16T10:00:00Z");
     Instant claimNow = Instant.parse("2026-03-16T10:30:00Z");
 
-    UUID oldest = insertJob(
-        UUID.fromString("f34c6d1f-97b2-4d57-bf70-5e34018fc0c2"),
-        "FAILED",
-        0,
-        olderThan.minusSeconds(120),
-        null);
+    UUID oldest =
+        insertJob(
+            UUID.fromString("f34c6d1f-97b2-4d57-bf70-5e34018fc0c2"),
+            "FAILED",
+            0,
+            olderThan.minusSeconds(120),
+            null);
 
-    UUID secondOldest = insertJob(
-        UUID.fromString("2bf0348f-fca0-4cec-8fd2-c2c592f43fd9"),
-        "PENDING",
-        0,
-        olderThan.minusSeconds(60),
-        null);
+    UUID secondOldest =
+        insertJob(
+            UUID.fromString("2bf0348f-fca0-4cec-8fd2-c2c592f43fd9"),
+            "PENDING",
+            0,
+            olderThan.minusSeconds(60),
+            null);
 
-    UUID newestEligible = insertJob(
-        UUID.fromString("c46c8ed5-5d2f-4148-8d52-e57eb4785d95"),
-        "FAILED",
-        0,
-        olderThan.minusSeconds(30),
-        null);
+    UUID newestEligible =
+        insertJob(
+            UUID.fromString("c46c8ed5-5d2f-4148-8d52-e57eb4785d95"),
+            "FAILED",
+            0,
+            olderThan.minusSeconds(30),
+            null);
 
     List<EmailJobRecord> claimed = repository.claimRetryCandidates(3, olderThan, 2, claimNow);
 
     assertEquals(2, claimed.size());
-    assertEquals(List.of(oldest, secondOldest),
-        claimed.stream().map(EmailJobRecord::eventId).toList());
+    assertEquals(
+        List.of(oldest, secondOldest), claimed.stream().map(EmailJobRecord::eventId).toList());
 
     assertEquals(Timestamp.from(claimNow), findRow(oldest).get("updated_at"));
     assertEquals(Timestamp.from(claimNow), findRow(secondOldest).get("updated_at"));
-    assertEquals(Timestamp.from(olderThan.minusSeconds(30)),
-        findRow(newestEligible).get("updated_at"));
+    assertEquals(
+        Timestamp.from(olderThan.minusSeconds(30)), findRow(newestEligible).get("updated_at"));
   }
 
   @Test
@@ -244,8 +264,8 @@ class PostgresEmailJobRepositoryAdapterIT {
     assertNull(deadRow.get("sent_at"));
   }
 
-  private UUID insertJob(UUID eventId, String status, int attempts, Instant updatedAt,
-      Instant sentAt) {
+  private UUID insertJob(
+      UUID eventId, String status, int attempts, Instant updatedAt, Instant sentAt) {
     jdbcTemplate.update(
         """
             INSERT INTO email_jobs (
@@ -263,8 +283,8 @@ class PostgresEmailJobRepositoryAdapterIT {
         status,
         attempts,
         null,
-        new byte[]{1, 2, 3},
-        new byte[]{4, 5, 6},
+        new byte[] {1, 2, 3},
+        new byte[] {4, 5, 6},
         Timestamp.from(updatedAt.minusSeconds(10)),
         Timestamp.from(updatedAt),
         sentAt == null ? null : Timestamp.from(sentAt));
@@ -272,14 +292,15 @@ class PostgresEmailJobRepositoryAdapterIT {
   }
 
   private Map<String, Object> findRow(UUID eventId) {
-    Map<String, Object> row = jdbcTemplate.queryForMap(
-        """
+    Map<String, Object> row =
+        jdbcTemplate.queryForMap(
+            """
             SELECT event_id, correlation_id, type, template, to_email_fp, status, attempts,
                    last_error, payload_enc, payload_nonce, created_at, updated_at, sent_at
             FROM email_jobs
             WHERE event_id = ?
             """,
-        eventId);
+            eventId);
     assertNotNull(row);
     return row;
   }

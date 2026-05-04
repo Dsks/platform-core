@@ -53,7 +53,8 @@ public class AuthController {
       @Value("${qomo.security.cookie.same-site:Lax}") String sameSite,
       @Value("${qomo.security.verification.cookie.name:QOMO_VERIF}") String verificationCookieName,
       @Value("${qomo.security.verification.cookie.secure:false}") boolean verificationCookieSecure,
-      @Value("${qomo.security.verification.cookie.same-site:Lax}") String verificationCookieSameSite) {
+      @Value("${qomo.security.verification.cookie.same-site:Lax}")
+          String verificationCookieSameSite) {
     this.loginUseCase = loginUseCase;
     this.registerUserUseCase = registerUserUseCase;
     this.jwtTokenProvider = jwtTokenProvider;

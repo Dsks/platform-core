@@ -67,16 +67,16 @@ public class ProcessEmailCommandService implements ProcessEmailCommandUseCase {
       return EmailCommandProcessingOutcome.COMPLETED;
     }
 
-    boolean created = emailJobRepository.tryCreatePending(
-        eventId,
-        message.correlationId(),
-        message.type(),
-        message.template(),
-        emailFingerprint,
-        encrypted.ciphertext(),
-        encrypted.nonce(),
-        now
-    );
+    boolean created =
+        emailJobRepository.tryCreatePending(
+            eventId,
+            message.correlationId(),
+            message.type(),
+            message.template(),
+            emailFingerprint,
+            encrypted.ciphertext(),
+            encrypted.nonce(),
+            now);
 
     if (!created) {
       log.info(

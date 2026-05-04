@@ -35,11 +35,9 @@ class VerifyEmailServiceTest {
   private static final UUID TOKEN_ID = UUID.fromString("22222222-2222-4222-8222-222222222222");
   private static final UUID USER_ID = UUID.fromString("33333333-3333-4333-8333-333333333333");
 
-  @Mock
-  private VerificationTokenRepositoryPort verificationTokenRepository;
+  @Mock private VerificationTokenRepositoryPort verificationTokenRepository;
 
-  @Mock
-  private UserRepositoryPort userRepository;
+  @Mock private UserRepositoryPort userRepository;
 
   private VerifyEmailService service;
   private TokenHasher tokenHasher;
@@ -48,12 +46,9 @@ class VerifyEmailServiceTest {
   void setUp() {
     ClockPort fixedClock = () -> NOW;
     tokenHasher = new TokenHasher();
-    service = new VerifyEmailService(
-        verificationTokenRepository,
-        userRepository,
-        fixedClock,
-        tokenHasher,
-        5);
+    service =
+        new VerifyEmailService(
+            verificationTokenRepository, userRepository, fixedClock, tokenHasher, 5);
   }
 
   @Test
@@ -62,7 +57,7 @@ class VerifyEmailServiceTest {
     var token = activeTokenWithCode("123456", 0);
 
     when(verificationTokenRepository.findActiveBySessionAndType(
-        eq(SESSION_ID), eq(VerificationToken.Type.EMAIL_VERIFICATION), eq(NOW)))
+            eq(SESSION_ID), eq(VerificationToken.Type.EMAIL_VERIFICATION), eq(NOW)))
         .thenReturn(Optional.of(token));
 
     boolean result = service.verify(command);
@@ -88,21 +83,21 @@ class VerifyEmailServiceTest {
   }
 
   static VerifyEmailUseCase.Command[] invalidCommands() {
-    return new VerifyEmailUseCase.Command[]{
-        null,
-        new VerifyEmailUseCase.Command(null, "123456"),
-        new VerifyEmailUseCase.Command(SESSION_ID, null),
-        new VerifyEmailUseCase.Command(SESSION_ID, "12345"),
-        new VerifyEmailUseCase.Command(SESSION_ID, "1234567"),
-        new VerifyEmailUseCase.Command(SESSION_ID, "12ab56"),
-        new VerifyEmailUseCase.Command(SESSION_ID, "      ")
+    return new VerifyEmailUseCase.Command[] {
+      null,
+      new VerifyEmailUseCase.Command(null, "123456"),
+      new VerifyEmailUseCase.Command(SESSION_ID, null),
+      new VerifyEmailUseCase.Command(SESSION_ID, "12345"),
+      new VerifyEmailUseCase.Command(SESSION_ID, "1234567"),
+      new VerifyEmailUseCase.Command(SESSION_ID, "12ab56"),
+      new VerifyEmailUseCase.Command(SESSION_ID, "      ")
     };
   }
 
   @Test
   void verify_shouldReturnFalseAndSkipSideEffects_whenNoActiveTokenExists() {
     when(verificationTokenRepository.findActiveBySessionAndType(
-        eq(SESSION_ID), eq(VerificationToken.Type.EMAIL_VERIFICATION), eq(NOW)))
+            eq(SESSION_ID), eq(VerificationToken.Type.EMAIL_VERIFICATION), eq(NOW)))
         .thenReturn(Optional.empty());
 
     boolean result = service.verify(new VerifyEmailUseCase.Command(SESSION_ID, "123456"));
@@ -115,17 +110,14 @@ class VerifyEmailServiceTest {
 
   @Test
   void verify_shouldIncrementAttemptsAndReturnFalse_whenMaxAttemptsReached() {
-    service = new VerifyEmailService(
-        verificationTokenRepository,
-        userRepository,
-        () -> NOW,
-        tokenHasher,
-        3);
+    service =
+        new VerifyEmailService(
+            verificationTokenRepository, userRepository, () -> NOW, tokenHasher, 3);
 
     var token = activeTokenWithCode("123456", 3);
 
     when(verificationTokenRepository.findActiveBySessionAndType(
-        eq(SESSION_ID), eq(VerificationToken.Type.EMAIL_VERIFICATION), eq(NOW)))
+            eq(SESSION_ID), eq(VerificationToken.Type.EMAIL_VERIFICATION), eq(NOW)))
         .thenReturn(Optional.of(token));
 
     boolean result = service.verify(new VerifyEmailUseCase.Command(SESSION_ID, "123456"));
@@ -141,7 +133,7 @@ class VerifyEmailServiceTest {
     var token = activeTokenWithCode("654321", 1);
 
     when(verificationTokenRepository.findActiveBySessionAndType(
-        eq(SESSION_ID), eq(VerificationToken.Type.EMAIL_VERIFICATION), eq(NOW)))
+            eq(SESSION_ID), eq(VerificationToken.Type.EMAIL_VERIFICATION), eq(NOW)))
         .thenReturn(Optional.of(token));
 
     boolean result = service.verify(new VerifyEmailUseCase.Command(SESSION_ID, "123456"));
@@ -154,17 +146,14 @@ class VerifyEmailServiceTest {
 
   @Test
   void verify_shouldIgnoreAttemptLimit_whenMaxAttemptsIsZero() {
-    service = new VerifyEmailService(
-        verificationTokenRepository,
-        userRepository,
-        () -> NOW,
-        tokenHasher,
-        0);
+    service =
+        new VerifyEmailService(
+            verificationTokenRepository, userRepository, () -> NOW, tokenHasher, 0);
 
     var token = activeTokenWithCode("123456", 99);
 
     when(verificationTokenRepository.findActiveBySessionAndType(
-        eq(SESSION_ID), eq(VerificationToken.Type.EMAIL_VERIFICATION), eq(NOW)))
+            eq(SESSION_ID), eq(VerificationToken.Type.EMAIL_VERIFICATION), eq(NOW)))
         .thenReturn(Optional.of(token));
 
     boolean result = service.verify(new VerifyEmailUseCase.Command(SESSION_ID, "123456"));

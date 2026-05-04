@@ -33,26 +33,19 @@ import org.springframework.test.web.servlet.MockMvc;
 @Import(ApiExceptionHandler.class)
 class ApiExceptionHandlerWebContractTest {
 
-  @Autowired
-  private MockMvc mockMvc;
+  @Autowired private MockMvc mockMvc;
 
-  @MockitoBean
-  private LoginUseCase loginUseCase;
+  @MockitoBean private LoginUseCase loginUseCase;
 
-  @MockitoBean
-  private RegisterUserUseCase registerUserUseCase;
+  @MockitoBean private RegisterUserUseCase registerUserUseCase;
 
-  @MockitoBean
-  private CreateUserUseCase createUserUseCase;
+  @MockitoBean private CreateUserUseCase createUserUseCase;
 
-  @MockitoBean
-  private GetUserUseCase getUserUseCase;
+  @MockitoBean private GetUserUseCase getUserUseCase;
 
-  @MockitoBean
-  private JwtTokenProviderPort jwtTokenProvider;
+  @MockitoBean private JwtTokenProviderPort jwtTokenProvider;
 
-  @MockitoBean
-  private ClockPort clock;
+  @MockitoBean private ClockPort clock;
 
   @Test
   void register_withInvalidBody_shouldReturnValidationProblemDetail() throws Exception {
@@ -60,7 +53,8 @@ class ApiExceptionHandlerWebContractTest {
         .perform(
             post("/v1/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""
+                .content(
+                    """
                     {"email":"bad-email","password":""}
                     """))
         .andExpect(status().isBadRequest())
@@ -75,10 +69,7 @@ class ApiExceptionHandlerWebContractTest {
   @Test
   void register_withMalformedJson_shouldReturnMalformedRequestProblemDetail() throws Exception {
     mockMvc
-        .perform(
-            post("/v1/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{"))
+        .perform(post("/v1/auth/register").contentType(MediaType.APPLICATION_JSON).content("{"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.title").value("MALFORMED_REQUEST"))
         .andExpect(jsonPath("$.status").value(400))
@@ -109,7 +100,8 @@ class ApiExceptionHandlerWebContractTest {
         .perform(
             post("/v1/users")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""
+                .content(
+                    """
                     {
                       "email": "used@example.com",
                       "password": "StrongPass123!",
@@ -134,7 +126,8 @@ class ApiExceptionHandlerWebContractTest {
         .perform(
             post("/v1/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""
+                .content(
+                    """
                     {"email":"used@example.com","password":"StrongPass123!"}
                     """))
         .andExpect(status().isAccepted())
@@ -146,14 +139,14 @@ class ApiExceptionHandlerWebContractTest {
   @Test
   void login_whenApplicationExceptionMapped_shouldReturnExpectedStatusAndProblemFormat()
       throws Exception {
-    when(loginUseCase.login(any()))
-        .thenThrow(new ForbiddenOperationException("admin only"));
+    when(loginUseCase.login(any())).thenThrow(new ForbiddenOperationException("admin only"));
 
     mockMvc
         .perform(
             post("/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""
+                .content(
+                    """
                     {"email":"user@example.com","password":"StrongPass123!"}
                     """))
         .andExpect(status().isForbidden())
@@ -166,14 +159,14 @@ class ApiExceptionHandlerWebContractTest {
 
   @Test
   void login_whenApplicationExceptionIsUnmapped_shouldFallbackToBadRequest() throws Exception {
-    when(loginUseCase.login(any()))
-        .thenThrow(new UnknownApplicationException());
+    when(loginUseCase.login(any())).thenThrow(new UnknownApplicationException());
 
     mockMvc
         .perform(
             post("/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""
+                .content(
+                    """
                     {"email":"user@example.com","password":"StrongPass123!"}
                     """))
         .andExpect(status().isBadRequest())

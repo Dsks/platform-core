@@ -4,13 +4,9 @@ import java.util.UUID;
 
 public interface ResendEmailVerificationUseCase {
 
-  record Command(String email) {
+  record Command(String email) {}
 
-  }
-
-  record Result(UUID verificationSessionId, long verificationTtlSeconds) {
-
-  }
+  record Result(UUID verificationSessionId, long verificationTtlSeconds) {}
 
   Result resend(Command command);
 }

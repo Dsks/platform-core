@@ -30,8 +30,7 @@ public class PostgresEmailJobRepositoryAdapter implements EmailJobRepositoryPort
       String toEmailFp,
       byte[] payloadEnc,
       byte[] payloadNonce,
-      Instant now
-  ) {
+      Instant now) {
     try {
       var tsNow = Timestamp.from(now);
 
@@ -52,8 +51,7 @@ public class PostgresEmailJobRepositoryAdapter implements EmailJobRepositoryPort
           payloadEnc,
           payloadNonce,
           tsNow,
-          tsNow
-      );
+          tsNow);
       return true;
     } catch (DuplicateKeyException e) {
       return false;
@@ -90,10 +88,7 @@ public class PostgresEmailJobRepositoryAdapter implements EmailJobRepositoryPort
 
   @Override
   public List<EmailJobRecord> claimRetryCandidates(
-      int maxAttempts,
-      Instant olderThan,
-      int limit,
-      Instant now) {
+      int maxAttempts, Instant olderThan, int limit, Instant now) {
     return jdbcTemplate.query(
         """
              WITH candidates AS (
@@ -119,15 +114,16 @@ public class PostgresEmailJobRepositoryAdapter implements EmailJobRepositoryPort
                        jobs.payload_nonce,
                        jobs.attempts
             """,
-        (rs, rowNum) -> new EmailJobRecord(
-            rs.getObject("event_id", UUID.class),
-            rs.getString("correlation_id"),
-            rs.getString("type"),
-            rs.getString("template"),
-            rs.getString("to_email_fp"),
-            rs.getBytes("payload_enc"),
-            rs.getBytes("payload_nonce"),
-            rs.getInt("attempts")),
+        (rs, rowNum) ->
+            new EmailJobRecord(
+                rs.getObject("event_id", UUID.class),
+                rs.getString("correlation_id"),
+                rs.getString("type"),
+                rs.getString("template"),
+                rs.getString("to_email_fp"),
+                rs.getBytes("payload_enc"),
+                rs.getBytes("payload_nonce"),
+                rs.getInt("attempts")),
         maxAttempts,
         Timestamp.from(olderThan),
         limit,

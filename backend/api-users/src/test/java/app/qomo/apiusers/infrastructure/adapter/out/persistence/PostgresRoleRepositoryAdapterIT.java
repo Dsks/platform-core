@@ -16,8 +16,7 @@ import org.springframework.test.context.ActiveProfiles;
 @Import(TestContainersConfig.class)
 class PostgresRoleRepositoryAdapterIT {
 
-  @Autowired
-  private RoleRepositoryPort roleRepository;
+  @Autowired private RoleRepositoryPort roleRepository;
 
   @Test
   void findByName_shouldNormalizeCaseAndWhitespaceBeforeQuerying() {

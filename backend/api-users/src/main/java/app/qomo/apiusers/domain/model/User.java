@@ -96,7 +96,7 @@ public final class User {
   private void touch(Instant now) {
     this.updatedAt = Objects.requireNonNull(now, "now cannot be null");
   }
-  
+
   public UserId id() {
     return id;
   }

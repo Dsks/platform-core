@@ -19,19 +19,18 @@ import org.springframework.core.io.ResourceLoader;
 @ExtendWith(MockitoExtension.class)
 class ClasspathEmailTemplateRendererAdapterTest {
 
-  @Mock
-  private ResourceLoader resourceLoader;
+  @Mock private ResourceLoader resourceLoader;
 
-  @Mock
-  private Resource resource;
+  @Mock private Resource resource;
 
   @Test
   void render_supportedTemplate_replacesPlaceholdersFromModel() {
     ClasspathEmailTemplateRendererAdapter adapter =
         new ClasspathEmailTemplateRendererAdapter(new DefaultResourceLoader());
 
-    String rendered = adapter.render("EMAIL_VERIFICATION",
-        Map.of("verificationCode", "123456", "appName", "Qomo"));
+    String rendered =
+        adapter.render(
+            "EMAIL_VERIFICATION", Map.of("verificationCode", "123456", "appName", "Qomo"));
 
     assertNotEquals(-1, rendered.indexOf("<strong>123456</strong>"));
     assertNotEquals(-1, rendered.indexOf("Qomo - Email Verification"));
@@ -55,8 +54,9 @@ class ClasspathEmailTemplateRendererAdapterTest {
     ClasspathEmailTemplateRendererAdapter adapter =
         new ClasspathEmailTemplateRendererAdapter(resourceLoader);
 
-    TemplateNotFoundException exception = assertThrows(TemplateNotFoundException.class,
-        () -> adapter.render("WELCOME_EMAIL", Map.of()));
+    TemplateNotFoundException exception =
+        assertThrows(
+            TemplateNotFoundException.class, () -> adapter.render("WELCOME_EMAIL", Map.of()));
 
     assertNotEquals(-1, exception.getMessage().indexOf("Template not found: WELCOME_EMAIL"));
   }
@@ -65,12 +65,13 @@ class ClasspathEmailTemplateRendererAdapterTest {
   void render_supportedTemplate_whenResourceDoesNotExist_throwsTemplateNotFoundException() {
     ClasspathEmailTemplateRendererAdapter adapter =
         new ClasspathEmailTemplateRendererAdapter(resourceLoader);
-    when(resourceLoader.getResource("classpath:templates/email_verification.html")).thenReturn(
-        resource);
+    when(resourceLoader.getResource("classpath:templates/email_verification.html"))
+        .thenReturn(resource);
     when(resource.exists()).thenReturn(false);
 
-    TemplateNotFoundException exception = assertThrows(TemplateNotFoundException.class,
-        () -> adapter.render("EMAIL_VERIFICATION", Map.of()));
+    TemplateNotFoundException exception =
+        assertThrows(
+            TemplateNotFoundException.class, () -> adapter.render("EMAIL_VERIFICATION", Map.of()));
 
     assertNotEquals(-1, exception.getMessage().indexOf("Template not found: EMAIL_VERIFICATION"));
   }
@@ -80,17 +81,19 @@ class ClasspathEmailTemplateRendererAdapterTest {
       throws IOException {
     ClasspathEmailTemplateRendererAdapter adapter =
         new ClasspathEmailTemplateRendererAdapter(resourceLoader);
-    when(resourceLoader.getResource("classpath:templates/email_verification.html")).thenReturn(
-        resource);
+    when(resourceLoader.getResource("classpath:templates/email_verification.html"))
+        .thenReturn(resource);
     when(resource.exists()).thenReturn(true);
     when(resource.getContentAsString(java.nio.charset.StandardCharsets.UTF_8))
         .thenThrow(new IOException("disk broken"));
 
-    TemplateNotFoundException exception = assertThrows(TemplateNotFoundException.class,
-        () -> adapter.render("EMAIL_VERIFICATION", Map.of("verificationCode", "123456")));
+    TemplateNotFoundException exception =
+        assertThrows(
+            TemplateNotFoundException.class,
+            () -> adapter.render("EMAIL_VERIFICATION", Map.of("verificationCode", "123456")));
 
-    assertNotEquals(-1,
-        exception.getMessage().indexOf("Template could not be read: EMAIL_VERIFICATION"));
+    assertNotEquals(
+        -1, exception.getMessage().indexOf("Template could not be read: EMAIL_VERIFICATION"));
     assertTrue(exception.getCause() instanceof IOException);
   }
 }

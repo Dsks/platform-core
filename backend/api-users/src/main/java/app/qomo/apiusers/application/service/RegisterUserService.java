@@ -35,9 +35,9 @@ public class RegisterUserService implements RegisterUserUseCase {
     this.roleRepository = Objects.requireNonNull(roleRepository, "roleRepository cannot be null");
     this.passwordHasher = Objects.requireNonNull(passwordHasher, "passwordHasher cannot be null");
     this.clock = Objects.requireNonNull(clock, "clock cannot be null");
-    this.issueEmailVerificationService = Objects.requireNonNull(
-        issueEmailVerificationService,
-        "issueEmailVerificationService cannot be null");
+    this.issueEmailVerificationService =
+        Objects.requireNonNull(
+            issueEmailVerificationService, "issueEmailVerificationService cannot be null");
   }
 
   @Override
@@ -68,11 +68,9 @@ public class RegisterUserService implements RegisterUserUseCase {
     var existing = userRepository.findByEmail(email.value());
     if (existing.isPresent()) {
       if (!existing.get().isVerified()) {
-        var issueResult = issueEmailVerificationService.issue(
-            existing.get().id(),
-            email,
-            "REGISTER_EXISTING_UNVERIFIED",
-            requestId);
+        var issueResult =
+            issueEmailVerificationService.issue(
+                existing.get().id(), email, "REGISTER_EXISTING_UNVERIFIED", requestId);
         return new Result(requestId, issueResult.verificationSessionId(), issueResult.ttlSeconds());
       }
       return new Result(requestId, null, 0);

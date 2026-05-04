@@ -32,24 +32,18 @@ class OutboxPublisherJobTest {
   private static final int BATCH_SIZE = 50;
   private static final int MAX_ATTEMPTS = 3;
 
-  @Mock
-  private OutboxRepositoryPort outboxRepository;
+  @Mock private OutboxRepositoryPort outboxRepository;
 
-  @Mock
-  private OutboxEventPublisherPort outboxPublisher;
+  @Mock private OutboxEventPublisherPort outboxPublisher;
 
   private OutboxPublisherJob job;
 
   @BeforeEach
   void setUp() {
     ClockPort clock = () -> NOW;
-    job = new OutboxPublisherJob(
-        outboxRepository,
-        outboxPublisher,
-        clock,
-        BATCH_SIZE,
-        MAX_ATTEMPTS,
-        MIN_AGE);
+    job =
+        new OutboxPublisherJob(
+            outboxRepository, outboxPublisher, clock, BATCH_SIZE, MAX_ATTEMPTS, MIN_AGE);
   }
 
   @Test
@@ -137,10 +131,10 @@ class OutboxPublisherJobTest {
 
   @Test
   void publishPendingEvents_shouldProcessMultipleEventsInSingleRun_andContinueAfterFailure() {
-    var publishFailsRetryable = eventWithAttempts(
-        UUID.fromString("ffffffff-ffff-4fff-8fff-ffffffffffff"), 1);
-    var alreadyExhausted = eventWithAttempts(
-        UUID.fromString("11111111-1111-4111-8111-111111111111"), 3);
+    var publishFailsRetryable =
+        eventWithAttempts(UUID.fromString("ffffffff-ffff-4fff-8fff-ffffffffffff"), 1);
+    var alreadyExhausted =
+        eventWithAttempts(UUID.fromString("11111111-1111-4111-8111-111111111111"), 3);
     var olderThan = NOW.minus(MIN_AGE);
 
     when(outboxRepository.claimPublishable(BATCH_SIZE, olderThan, NOW))

@@ -24,8 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/v1/users")
 public class VerifyEmailController {
 
-  private static final Map<String, String> GENERIC_RESPONSE =
-      Map.of("message", "Code Not Found");
+  private static final Map<String, String> GENERIC_RESPONSE = Map.of("message", "Code Not Found");
   private static final Map<String, String> GENERIC_RESPONSE_RESEND =
       Map.of("message", "Forwarded Code");
 
@@ -40,7 +39,8 @@ public class VerifyEmailController {
       ResendEmailVerificationUseCase resendEmailVerificationUseCase,
       @Value("${qomo.security.verification.cookie.name:QOMO_VERIF}") String verificationCookieName,
       @Value("${qomo.security.verification.cookie.secure:false}") boolean verificationCookieSecure,
-      @Value("${qomo.security.verification.cookie.same-site:Lax}") String verificationCookieSameSite) {
+      @Value("${qomo.security.verification.cookie.same-site:Lax}")
+          String verificationCookieSameSite) {
     this.verifyEmailUseCase = verifyEmailUseCase;
     this.resendEmailVerificationUseCase = resendEmailVerificationUseCase;
     this.verificationCookieName = verificationCookieName;
@@ -63,8 +63,8 @@ public class VerifyEmailController {
       return ResponseEntity.accepted().body(GENERIC_RESPONSE);
     }
 
-    var ok = verifyEmailUseCase.verify(
-        new VerifyEmailUseCase.Command(parsedSessionId, request.code()));
+    var ok =
+        verifyEmailUseCase.verify(new VerifyEmailUseCase.Command(parsedSessionId, request.code()));
     if (!ok) {
       return ResponseEntity.accepted().body(GENERIC_RESPONSE);
     }
@@ -78,7 +78,8 @@ public class VerifyEmailController {
             .maxAge(Duration.ZERO)
             .build();
 
-    return ResponseEntity.noContent().header(HttpHeaders.SET_COOKIE, clearCookie.toString())
+    return ResponseEntity.noContent()
+        .header(HttpHeaders.SET_COOKIE, clearCookie.toString())
         .build();
   }
 

@@ -28,12 +28,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 @ExtendWith(MockitoExtension.class)
 class JwtCookieAuthFilterTest {
 
-  @Mock
-  private JwtTokenProviderPort jwtTokenProviderPort;
-  @Mock
-  private ClockPort clockPort;
-  @Mock
-  private FilterChain filterChain;
+  @Mock private JwtTokenProviderPort jwtTokenProviderPort;
+  @Mock private ClockPort clockPort;
+  @Mock private FilterChain filterChain;
 
   @AfterEach
   void clearContext() {
@@ -44,10 +41,7 @@ class JwtCookieAuthFilterTest {
   void doesNotAuthenticateWhenCookieIsMissing() throws ServletException, IOException {
     JwtCookieAuthFilter filter = new JwtCookieAuthFilter(jwtTokenProviderPort, clockPort);
 
-    filter.doFilter(
-        new MockHttpServletRequest(),
-        new MockHttpServletResponse(),
-        filterChain);
+    filter.doFilter(new MockHttpServletRequest(), new MockHttpServletResponse(), filterChain);
 
     assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     verify(jwtTokenProviderPort, never()).validate(any(), any());

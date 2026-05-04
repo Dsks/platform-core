@@ -15,15 +15,14 @@ public interface EmailJobRepositoryPort {
       String toEmailFp,
       byte[] payloadEnc,
       byte[] payloadNonce,
-      Instant now
-  );
+      Instant now);
 
   void markSent(UUID eventId, Instant now);
 
   void markFailed(UUID eventId, String error, Instant now);
 
-  List<EmailJobRecord> claimRetryCandidates(int maxAttempts, Instant olderThan, int limit,
-      Instant now);
+  List<EmailJobRecord> claimRetryCandidates(
+      int maxAttempts, Instant olderThan, int limit, Instant now);
 
   void markDead(UUID eventId, String error, Instant now);
 }

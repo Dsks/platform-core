@@ -24,8 +24,8 @@ public class VerifyEmailService implements VerifyEmailUseCase {
       TokenHasher tokenHasher,
       int maxAttempts) {
     this.verificationTokenRepository =
-        Objects.requireNonNull(verificationTokenRepository,
-            "verificationTokenRepository cannot be null");
+        Objects.requireNonNull(
+            verificationTokenRepository, "verificationTokenRepository cannot be null");
     this.userRepository = Objects.requireNonNull(userRepository, "userRepository cannot be null");
     this.clock = Objects.requireNonNull(clock, "clock cannot be null");
     this.tokenHasher = Objects.requireNonNull(tokenHasher, "tokenHasher cannot be null");
@@ -35,7 +35,9 @@ public class VerifyEmailService implements VerifyEmailUseCase {
   @Override
   @Transactional
   public boolean verify(Command command) {
-    if (command == null || command.sessionId() == null || command.code() == null
+    if (command == null
+        || command.sessionId() == null
+        || command.code() == null
         || !command.code().matches("\\d{6}")) {
       return false;
     }

@@ -138,7 +138,8 @@ public class UsersBeansConfig {
   public ProducerFactory<String, String> kafkaProducerFactory(
       @Value("${spring.kafka.bootstrap-servers:kafka:9092}") String bootstrapServers) {
     Map<String, Object> config = new HashMap<>();
-    config.put(org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
+    config.put(
+        org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
         bootstrapServers);
     config.put(
         org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
@@ -162,7 +163,10 @@ public class UsersBeansConfig {
   }
 
   @Bean
-  @ConditionalOnProperty(value = "qomo.outbox.publisher.enabled", havingValue = "true", matchIfMissing = true)
+  @ConditionalOnProperty(
+      value = "qomo.outbox.publisher.enabled",
+      havingValue = "true",
+      matchIfMissing = true)
   public OutboxPublisherJob outboxPublisherJob(
       OutboxRepositoryPort outboxRepository,
       OutboxEventPublisherPort outboxPublisher,
@@ -171,10 +175,14 @@ public class UsersBeansConfig {
       @Value("${qomo.outbox.publisher.max-attempts:10}") int maxAttempts,
       @Value("${qomo.outbox.publisher.min-age-ms:500}") long minAgeMs) {
     return new OutboxPublisherJob(
-        outboxRepository, outboxPublisher, clock, batchSize, maxAttempts,
+        outboxRepository,
+        outboxPublisher,
+        clock,
+        batchSize,
+        maxAttempts,
         Duration.ofMillis(minAgeMs));
   }
-  
+
   @Bean
   public CreateUserUseCase createUserUseCase(
       UserRepositoryPort userRepository,
@@ -201,7 +209,8 @@ public class UsersBeansConfig {
       TokenHasher tokenHasher,
       ObjectMapper objectMapper,
       @Value("${qomo.security.verification.otp.ttl-seconds:600}") long emailOtpTtlSeconds,
-      @Value("${qomo.security.verification.resend-min-interval-seconds:60}") long resendMinIntervalSeconds,
+      @Value("${qomo.security.verification.resend-min-interval-seconds:60}")
+          long resendMinIntervalSeconds,
       @Value("${qomo.kafka.topics.email-commands:qomo.email.commands}") String emailCommandsTopic) {
     return new IssueEmailVerificationService(
         verificationTokenRepository,
@@ -232,11 +241,7 @@ public class UsersBeansConfig {
       ClockPort clock,
       IssueEmailVerificationService issueEmailVerificationService) {
     return new RegisterUserService(
-        userRepository,
-        roleRepository,
-        passwordHasher,
-        clock,
-        issueEmailVerificationService);
+        userRepository, roleRepository, passwordHasher, clock, issueEmailVerificationService);
   }
 
   @Bean

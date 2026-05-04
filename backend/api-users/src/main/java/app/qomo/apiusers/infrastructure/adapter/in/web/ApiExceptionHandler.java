@@ -92,8 +92,8 @@ public class ApiExceptionHandler {
         req.getRequestURI(),
         errors);
 
-    var pd = buildProblem(HttpStatus.BAD_REQUEST, VALIDATION_ERROR_CODE,
-        "Request validation failed");
+    var pd =
+        buildProblem(HttpStatus.BAD_REQUEST, VALIDATION_ERROR_CODE, "Request validation failed");
     pd.setProperty("errors", errors);
     return pd;
   }
@@ -102,9 +102,10 @@ public class ApiExceptionHandler {
   public ProblemDetail handleConstraintViolation(Exception ex, HttpServletRequest req) {
     List<String> errors =
         switch (ex) {
-          case ConstraintViolationException cve -> cve.getConstraintViolations().stream()
-              .map(v -> v.getPropertyPath() + ": " + v.getMessage())
-              .toList();
+          case ConstraintViolationException cve ->
+              cve.getConstraintViolations().stream()
+                  .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                  .toList();
           case HandlerMethodValidationException hmve -> {
             hmve.getMessage();
             yield List.of(hmve.getMessage());
@@ -118,8 +119,8 @@ public class ApiExceptionHandler {
         req.getRequestURI(),
         errors);
 
-    var pd = buildProblem(HttpStatus.BAD_REQUEST, VALIDATION_ERROR_CODE,
-        "Request validation failed");
+    var pd =
+        buildProblem(HttpStatus.BAD_REQUEST, VALIDATION_ERROR_CODE, "Request validation failed");
     pd.setProperty("errors", errors);
     return pd;
   }

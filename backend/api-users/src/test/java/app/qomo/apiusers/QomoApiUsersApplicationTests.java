@@ -11,6 +11,5 @@ import org.springframework.test.context.ActiveProfiles;
 class QomoApiUsersApplicationTests {
 
   @Test
-  void contextLoads() {
-  }
+  void contextLoads() {}
 }

@@ -24,8 +24,8 @@ public class JwtTokenProviderNimbusAdapter implements JwtTokenProviderPort {
   private final long expirationMs;
 
   public JwtTokenProviderNimbusAdapter(String secret, long expirationMs) {
-    this.sharedSecret = Objects.requireNonNull(secret, "secret cannot be null")
-        .getBytes(StandardCharsets.UTF_8);
+    this.sharedSecret =
+        Objects.requireNonNull(secret, "secret cannot be null").getBytes(StandardCharsets.UTF_8);
     this.expirationMs = expirationMs;
   }
 

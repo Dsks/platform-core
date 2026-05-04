@@ -24,11 +24,9 @@ import org.springframework.test.context.ActiveProfiles;
 @Import(TestContainersConfig.class)
 class PostgresOutboxRepositoryAdapterIT {
 
-  @Autowired
-  private OutboxRepositoryPort outboxRepository;
+  @Autowired private OutboxRepositoryPort outboxRepository;
 
-  @Autowired
-  private JdbcTemplate jdbcTemplate;
+  @Autowired private JdbcTemplate jdbcTemplate;
 
   @BeforeEach
   void cleanTable() {
@@ -88,8 +86,8 @@ class PostgresOutboxRepositoryAdapterIT {
     List<Instant> claimedCreatedAt =
         claimed.stream().map(OutboxEvent::createdAt).sorted(Comparator.naturalOrder()).toList();
     assertThat(claimedCreatedAt)
-        .containsExactly(Instant.parse("2026-03-20T09:30:00Z"),
-            Instant.parse("2026-03-20T09:35:00Z"));
+        .containsExactly(
+            Instant.parse("2026-03-20T09:30:00Z"), Instant.parse("2026-03-20T09:35:00Z"));
 
     assertStatusAndUpdatedAt(pendingOldest, "IN_PROGRESS", now);
     assertStatusAndUpdatedAt(failedSecond, "IN_PROGRESS", now);
@@ -107,8 +105,8 @@ class PostgresOutboxRepositoryAdapterIT {
 
     outboxRepository.markSent(id, now);
 
-    Map<String, Object> row = jdbcTemplate.queryForMap(
-        "SELECT * FROM auth_outbox_events WHERE id = ?", id);
+    Map<String, Object> row =
+        jdbcTemplate.queryForMap("SELECT * FROM auth_outbox_events WHERE id = ?", id);
     assertThat(row.get("status")).isEqualTo("SENT");
     assertThat(((Integer) row.get("attempts"))).isEqualTo(3);
     assertThat(((Timestamp) row.get("updated_at")).toInstant()).isEqualTo(now);
@@ -123,8 +121,8 @@ class PostgresOutboxRepositoryAdapterIT {
 
     outboxRepository.markFailed(id, "  timeout\n\n contacting    kafka  ", now);
 
-    Map<String, Object> row = jdbcTemplate.queryForMap(
-        "SELECT * FROM auth_outbox_events WHERE id = ?", id);
+    Map<String, Object> row =
+        jdbcTemplate.queryForMap("SELECT * FROM auth_outbox_events WHERE id = ?", id);
     assertThat(row.get("status")).isEqualTo("FAILED");
     assertThat(((Integer) row.get("attempts"))).isEqualTo(2);
     assertThat(row.get("last_error")).isEqualTo("timeout contacting kafka");
@@ -140,8 +138,8 @@ class PostgresOutboxRepositoryAdapterIT {
 
     outboxRepository.markDead(id, longError, now);
 
-    Map<String, Object> row = jdbcTemplate.queryForMap(
-        "SELECT * FROM auth_outbox_events WHERE id = ?", id);
+    Map<String, Object> row =
+        jdbcTemplate.queryForMap("SELECT * FROM auth_outbox_events WHERE id = ?", id);
     assertThat(row.get("status")).isEqualTo("DEAD");
     assertThat(((Integer) row.get("attempts"))).isEqualTo(5);
     assertThat(((String) row.get("last_error")).length()).isEqualTo(2048);
@@ -158,8 +156,8 @@ class PostgresOutboxRepositoryAdapterIT {
     outboxRepository.markFailed(pending, "should not update", now);
     outboxRepository.markDead(pending, "should not update", now);
 
-    Map<String, Object> row = jdbcTemplate.queryForMap(
-        "SELECT * FROM auth_outbox_events WHERE id = ?", pending);
+    Map<String, Object> row =
+        jdbcTemplate.queryForMap("SELECT * FROM auth_outbox_events WHERE id = ?", pending);
     assertThat(row.get("status")).isEqualTo("PENDING");
     assertThat(((Integer) row.get("attempts"))).isEqualTo(0);
     assertThat(row.get("last_error")).isNull();
@@ -192,8 +190,8 @@ class PostgresOutboxRepositoryAdapterIT {
 
   private void assertStatusAndUpdatedAt(UUID id, String status, Instant updatedAt) {
     Map<String, Object> row =
-        jdbcTemplate.queryForMap("SELECT status, updated_at FROM auth_outbox_events WHERE id = ?",
-            id);
+        jdbcTemplate.queryForMap(
+            "SELECT status, updated_at FROM auth_outbox_events WHERE id = ?", id);
     assertThat(row.get("status")).isEqualTo(status);
     assertThat(((Timestamp) row.get("updated_at")).toInstant()).isEqualTo(updatedAt);
   }

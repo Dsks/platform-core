@@ -5,14 +5,13 @@ import java.util.UUID;
 
 public interface LoginUseCase {
 
-  record Command(String email, String password) {
+  record Command(String email, String password) {}
 
-  }
-
-  record Result(User user, boolean emailNotVerified, UUID verificationSessionId,
-                long verificationTtlSeconds) {
-
-  }
+  record Result(
+      User user,
+      boolean emailNotVerified,
+      UUID verificationSessionId,
+      long verificationTtlSeconds) {}
 
   Result login(Command command);
 }

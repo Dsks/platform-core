@@ -15,9 +15,9 @@ public class ResendEmailVerificationService implements ResendEmailVerificationUs
       UserRepositoryPort userRepository,
       IssueEmailVerificationService issueEmailVerificationService) {
     this.userRepository = Objects.requireNonNull(userRepository, "userRepository cannot be null");
-    this.issueEmailVerificationService = Objects.requireNonNull(
-        issueEmailVerificationService,
-        "issueEmailVerificationService cannot be null");
+    this.issueEmailVerificationService =
+        Objects.requireNonNull(
+            issueEmailVerificationService, "issueEmailVerificationService cannot be null");
   }
 
   @Override
@@ -38,11 +38,9 @@ public class ResendEmailVerificationService implements ResendEmailVerificationUs
       return new Result(null, 0);
     }
 
-    var issueResult = issueEmailVerificationService.issue(
-        user.get().id(),
-        email,
-        "RESEND_ENDPOINT",
-        java.util.UUID.randomUUID().toString());
+    var issueResult =
+        issueEmailVerificationService.issue(
+            user.get().id(), email, "RESEND_ENDPOINT", java.util.UUID.randomUUID().toString());
 
     return new Result(issueResult.verificationSessionId(), issueResult.ttlSeconds());
   }

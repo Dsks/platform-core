@@ -48,30 +48,25 @@ class LoginServiceTest {
   private static final String NORMALIZED_EMAIL = "user.login@example.com";
   private static final String RAW_PASSWORD = "plain-secret";
 
-  @Mock
-  private UserRepositoryPort userRepository;
+  @Mock private UserRepositoryPort userRepository;
 
-  @Mock
-  private PasswordVerifierPort passwordVerifier;
+  @Mock private PasswordVerifierPort passwordVerifier;
 
-  @Mock
-  private IssueEmailVerificationService issueEmailVerificationService;
+  @Mock private IssueEmailVerificationService issueEmailVerificationService;
 
   private LoginService service;
 
   @BeforeEach
   void setUp() {
     ClockPort clock = () -> NOW;
-    service = new LoginService(userRepository, passwordVerifier, clock,
-        issueEmailVerificationService);
+    service =
+        new LoginService(userRepository, passwordVerifier, clock, issueEmailVerificationService);
   }
 
   @ParameterizedTest
   @MethodSource("invalidCommands")
   void login_shouldRejectInvalidCommands_andSkipAllSideEffects(
-      LoginUseCase.Command command,
-      String expectedField,
-      String expectedReason) {
+      LoginUseCase.Command command, String expectedField, String expectedReason) {
 
     var ex = assertThrows(InvalidCommandException.class, () -> service.login(command));
 
@@ -136,10 +131,7 @@ class LoginServiceTest {
     when(userRepository.findByEmail(NORMALIZED_EMAIL)).thenReturn(Optional.of(unverifiedUser));
     when(passwordVerifier.matches(RAW_PASSWORD, unverifiedUser.passwordHash())).thenReturn(true);
     when(issueEmailVerificationService.issue(
-        eq(unverifiedUser.id()),
-        eq(unverifiedUser.email()),
-        eq("LOGIN_UNVERIFIED"),
-        any()))
+            eq(unverifiedUser.id()), eq(unverifiedUser.email()), eq("LOGIN_UNVERIFIED"), any()))
         .thenReturn(new IssueEmailVerificationService.IssueResult(issuedSessionId, 900, true));
 
     var result = service.login(command);
@@ -164,8 +156,8 @@ class LoginServiceTest {
   @Test
   void login_shouldReturnVerifiedUserAndUpdateLastLogin_whenCredentialsAreValidAndUserVerified() {
     var previousLogin = Instant.parse("2026-03-10T12:30:00Z");
-    var verifiedUser = restoredUser(true, true, previousLogin,
-        Instant.parse("2026-03-20T00:00:00Z"));
+    var verifiedUser =
+        restoredUser(true, true, previousLogin, Instant.parse("2026-03-20T00:00:00Z"));
     var command = new LoginUseCase.Command(RAW_EMAIL, RAW_PASSWORD);
 
     when(userRepository.findByEmail(NORMALIZED_EMAIL)).thenReturn(Optional.of(verifiedUser));
@@ -212,10 +204,7 @@ class LoginServiceTest {
   }
 
   private static User restoredUser(
-      boolean active,
-      boolean verified,
-      Instant lastLogin,
-      Instant updatedAt) {
+      boolean active, boolean verified, Instant lastLogin, Instant updatedAt) {
     return User.restore(
         new UserId(UUID.fromString("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")),
         new Email(NORMALIZED_EMAIL),

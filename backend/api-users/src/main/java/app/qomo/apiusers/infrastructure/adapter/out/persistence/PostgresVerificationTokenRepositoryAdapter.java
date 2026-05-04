@@ -103,8 +103,8 @@ public class PostgresVerificationTokenRepositoryAdapter implements VerificationT
   }
 
   @Override
-  public Optional<VerificationToken> findLatestByUserAndType(UserId userId,
-      VerificationToken.Type type) {
+  public Optional<VerificationToken> findLatestByUserAndType(
+      UserId userId, VerificationToken.Type type) {
     return jdbcTemplate
         .query(
             SQL_FIND_LATEST_BY_USER_AND_TYPE,
@@ -131,16 +131,20 @@ public class PostgresVerificationTokenRepositoryAdapter implements VerificationT
 
   @Override
   public void invalidateActiveTokens(UserId userId, VerificationToken.Type type, Instant now) {
-    jdbcTemplate.update(SQL_INVALIDATE_ACTIVE_TOKENS, Timestamp.from(now), userId.value(),
-        type.name());
+    jdbcTemplate.update(
+        SQL_INVALIDATE_ACTIVE_TOKENS, Timestamp.from(now), userId.value(), type.name());
   }
 
   @Override
   public Optional<VerificationToken> findActiveBySessionAndType(
       UUID sessionId, VerificationToken.Type type, Instant now) {
     return jdbcTemplate
-        .query(SQL_FIND_ACTIVE_BY_SESSION_AND_TYPE, (rs, rowNum) -> mapToken(rs), sessionId,
-            type.name(), Timestamp.from(now))
+        .query(
+            SQL_FIND_ACTIVE_BY_SESSION_AND_TYPE,
+            (rs, rowNum) -> mapToken(rs),
+            sessionId,
+            type.name(),
+            Timestamp.from(now))
         .stream()
         .findFirst();
   }

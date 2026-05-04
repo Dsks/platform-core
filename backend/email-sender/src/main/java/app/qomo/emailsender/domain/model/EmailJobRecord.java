@@ -10,6 +10,4 @@ public record EmailJobRecord(
     String toEmailFp,
     byte[] payloadEnc,
     byte[] payloadNonce,
-    int attempts) {
-
-}
+    int attempts) {}

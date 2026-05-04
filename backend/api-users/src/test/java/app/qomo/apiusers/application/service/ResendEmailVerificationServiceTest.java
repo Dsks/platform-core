@@ -30,11 +30,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class ResendEmailVerificationServiceTest {
 
-  @Mock
-  private UserRepositoryPort userRepository;
+  @Mock private UserRepositoryPort userRepository;
 
-  @Mock
-  private IssueEmailVerificationService issueEmailVerificationService;
+  @Mock private IssueEmailVerificationService issueEmailVerificationService;
 
   private ResendEmailVerificationService service;
 
@@ -111,13 +109,13 @@ class ResendEmailVerificationServiceTest {
     var unverifiedUser = restoredUser(false);
     var sessionId = UUID.fromString("12345678-1234-4234-8234-123456789abc");
 
-    when(userRepository.findByEmail("not.verified@example.com")).thenReturn(
-        Optional.of(unverifiedUser));
+    when(userRepository.findByEmail("not.verified@example.com"))
+        .thenReturn(Optional.of(unverifiedUser));
     when(issueEmailVerificationService.issue(
-        eq(unverifiedUser.id()),
-        eq(new Email("not.verified@example.com")),
-        eq("RESEND_ENDPOINT"),
-        any()))
+            eq(unverifiedUser.id()),
+            eq(new Email("not.verified@example.com")),
+            eq("RESEND_ENDPOINT"),
+            any()))
         .thenReturn(new IssueEmailVerificationService.IssueResult(sessionId, 600, true));
 
     var result = service.resend(command);
@@ -126,11 +124,12 @@ class ResendEmailVerificationServiceTest {
     assertEquals(600, result.verificationTtlSeconds());
 
     var correlationCaptor = ArgumentCaptor.forClass(String.class);
-    verify(issueEmailVerificationService).issue(
-        eq(unverifiedUser.id()),
-        eq(new Email("not.verified@example.com")),
-        eq("RESEND_ENDPOINT"),
-        correlationCaptor.capture());
+    verify(issueEmailVerificationService)
+        .issue(
+            eq(unverifiedUser.id()),
+            eq(new Email("not.verified@example.com")),
+            eq("RESEND_ENDPOINT"),
+            correlationCaptor.capture());
     assertEquals(36, correlationCaptor.getValue().length());
   }
 

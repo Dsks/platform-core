@@ -37,26 +37,17 @@ import org.springframework.test.web.servlet.MockMvc;
 @Import(SecurityConfig.class)
 class SecurityConfigJwtWebLayerTest {
 
-  @Autowired
-  private MockMvc mockMvc;
+  @Autowired private MockMvc mockMvc;
 
-  @MockitoBean
-  private LoginUseCase loginUseCase;
-  @MockitoBean
-  private RegisterUserUseCase registerUserUseCase;
-  @MockitoBean
-  private CreateUserUseCase createUserUseCase;
-  @MockitoBean
-  private GetUserUseCase getUserUseCase;
-  @MockitoBean
-  private VerifyEmailUseCase verifyEmailUseCase;
-  @MockitoBean
-  private ResendEmailVerificationUseCase resendEmailVerificationUseCase;
+  @MockitoBean private LoginUseCase loginUseCase;
+  @MockitoBean private RegisterUserUseCase registerUserUseCase;
+  @MockitoBean private CreateUserUseCase createUserUseCase;
+  @MockitoBean private GetUserUseCase getUserUseCase;
+  @MockitoBean private VerifyEmailUseCase verifyEmailUseCase;
+  @MockitoBean private ResendEmailVerificationUseCase resendEmailVerificationUseCase;
 
-  @MockitoBean
-  private JwtTokenProviderPort jwtTokenProviderPort;
-  @MockitoBean
-  private ClockPort clockPort;
+  @MockitoBean private JwtTokenProviderPort jwtTokenProviderPort;
+  @MockitoBean private ClockPort clockPort;
 
   @Test
   void csrfEndpointIsPublic() throws Exception {
@@ -89,8 +80,8 @@ class SecurityConfigJwtWebLayerTest {
   void protectedUserRouteAllowsAccessWhenJwtCookieIsValid() throws Exception {
     when(clockPort.now()).thenReturn(Instant.parse("2026-03-26T10:15:30Z"));
     when(jwtTokenProviderPort.validate(eq("valid-jwt"), any(Instant.class))).thenReturn(true);
-    when(jwtTokenProviderPort.subject("valid-jwt")).thenReturn(
-        "8ad3b073-0d96-4f2e-b9e7-c93fa89075bf");
+    when(jwtTokenProviderPort.subject("valid-jwt"))
+        .thenReturn("8ad3b073-0d96-4f2e-b9e7-c93fa89075bf");
     when(jwtTokenProviderPort.roles("valid-jwt")).thenReturn(java.util.Set.of("USER"));
     when(getUserUseCase.getById(any())).thenReturn(Optional.empty());
 
@@ -105,8 +96,8 @@ class SecurityConfigJwtWebLayerTest {
   void createUserEndpointForbidsAuthenticatedUserWithoutAdminRole() throws Exception {
     when(clockPort.now()).thenReturn(Instant.parse("2026-03-26T10:15:30Z"));
     when(jwtTokenProviderPort.validate(eq("user-jwt"), any(Instant.class))).thenReturn(true);
-    when(jwtTokenProviderPort.subject("user-jwt")).thenReturn(
-        "bce24716-5337-4713-b8f1-8cab7c4f8a0f");
+    when(jwtTokenProviderPort.subject("user-jwt"))
+        .thenReturn("bce24716-5337-4713-b8f1-8cab7c4f8a0f");
     when(jwtTokenProviderPort.roles("user-jwt")).thenReturn(java.util.Set.of("USER"));
 
     mockMvc
@@ -114,7 +105,8 @@ class SecurityConfigJwtWebLayerTest {
             post("/v1/users")
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""
+                .content(
+                    """
                     {
                       "email": "new-user@qomo.app",
                       "password": "StrongPass123!",
@@ -129,8 +121,8 @@ class SecurityConfigJwtWebLayerTest {
   void createUserEndpointAllowsAuthenticatedAdminRole() throws Exception {
     when(clockPort.now()).thenReturn(Instant.parse("2026-03-26T10:15:30Z"));
     when(jwtTokenProviderPort.validate(eq("admin-jwt"), any(Instant.class))).thenReturn(true);
-    when(jwtTokenProviderPort.subject("admin-jwt")).thenReturn(
-        "5a9ddd91-9220-4ac8-9157-8563facc4ef3");
+    when(jwtTokenProviderPort.subject("admin-jwt"))
+        .thenReturn("5a9ddd91-9220-4ac8-9157-8563facc4ef3");
     when(jwtTokenProviderPort.roles("admin-jwt")).thenReturn(java.util.Set.of("ADMIN"));
     when(createUserUseCase.create(any())).thenReturn(new CreateUserUseCase.Result(UserId.newId()));
 
@@ -139,7 +131,8 @@ class SecurityConfigJwtWebLayerTest {
             post("/v1/users")
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""
+                .content(
+                    """
                     {
                       "email": "new-admin-created-user@qomo.app",
                       "password": "StrongPass123!",

@@ -26,9 +26,9 @@ public class LoginService implements LoginUseCase {
     this.passwordVerifier =
         Objects.requireNonNull(passwordVerifier, "passwordVerifier cannot be null");
     this.clock = Objects.requireNonNull(clock, "clock cannot be null");
-    this.issueEmailVerificationService = Objects.requireNonNull(
-        issueEmailVerificationService,
-        "issueEmailVerificationService cannot be null");
+    this.issueEmailVerificationService =
+        Objects.requireNonNull(
+            issueEmailVerificationService, "issueEmailVerificationService cannot be null");
   }
 
   @Override
@@ -58,11 +58,9 @@ public class LoginService implements LoginUseCase {
 
     if (!user.isVerified()) {
       var correlationId = java.util.UUID.randomUUID().toString();
-      var issueResult = issueEmailVerificationService.issue(
-          user.id(),
-          user.email(),
-          "LOGIN_UNVERIFIED",
-          correlationId);
+      var issueResult =
+          issueEmailVerificationService.issue(
+              user.id(), user.email(), "LOGIN_UNVERIFIED", correlationId);
       return new Result(null, true, issueResult.verificationSessionId(), issueResult.ttlSeconds());
     }
 
