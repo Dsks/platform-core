@@ -54,6 +54,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
     testImplementation("org.testcontainers:postgresql:1.21.4")
     testImplementation("org.testcontainers:junit-jupiter:1.21.4")
+    testImplementation("org.testcontainers:redpanda:1.21.4")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     add("mockitoAgent", "org.mockito:mockito-core")
 }
@@ -106,6 +107,8 @@ tasks.register<Test>("crossServiceE2eTest") {
     group = "verification"
     testClassesDirs = sourceSets["crossServiceE2e"].output.classesDirs
     classpath = sourceSets["crossServiceE2e"].runtimeClasspath
+    shouldRunAfter(tasks.test)
+    failOnNoDiscoveredTests = true
     useJUnitPlatform()
     jvmArgumentProviders += CommandLineArgumentProvider {
         val mockitoAgent = configurations.getByName("mockitoAgent").singleFile

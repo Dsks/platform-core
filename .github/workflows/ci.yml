@@ -49,6 +49,10 @@ jobs:
       - name: Run Tests
         run: ./gradlew test
 
+      - name: Run Cross-Service E2E (api-users)
+        if: matrix.service == 'api-users'
+        run: ./gradlew crossServiceE2eTest
+
   # ------------------------------------------------------------------
   # FRONTEND (Angular + NX) - 2 apps
   # ------------------------------------------------------------------
