@@ -143,6 +143,7 @@ public class PostgresUserRepositoryAdapter implements UserRepositoryPort {
         toTimestamp(user.createdAt()),
         toTimestamp(user.updatedAt()));
 
+    // Replace join rows with the aggregate snapshot so removed roles disappear atomically.
     jdbcTemplate.update(SQL_DELETE_USER_ROLES, user.id().value());
 
     var roleIds = user.roles().stream().map(role -> role.id().value()).collect(Collectors.toSet());

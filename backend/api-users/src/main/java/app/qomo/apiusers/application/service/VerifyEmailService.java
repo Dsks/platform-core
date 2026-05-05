@@ -60,6 +60,7 @@ public class VerifyEmailService implements VerifyEmailUseCase {
   @Override
   @Transactional
   public boolean verify(Command command) {
+    // Verification failures stay generic so callers cannot distinguish malformed secrets.
     if (command == null
         || command.sessionId() == null
         || command.code() == null
@@ -79,6 +80,7 @@ public class VerifyEmailService implements VerifyEmailUseCase {
     var verificationToken = token.get();
 
     if (maxAttempts > 0 && verificationToken.attempts() >= maxAttempts) {
+      // Keep counting post-limit attempts for audit while preserving the same caller response.
       verificationTokenRepository.incrementAttempts(verificationToken.id().value(), now);
       return false;
     }
@@ -89,6 +91,7 @@ public class VerifyEmailService implements VerifyEmailUseCase {
       return false;
     }
 
+    // Marking the user verified and consuming the token together prevents OTP replay.
     userRepository.setVerified(verificationToken.userId(), now);
     verificationTokenRepository.markConsumed(verificationToken.id().value(), now);
     return true;

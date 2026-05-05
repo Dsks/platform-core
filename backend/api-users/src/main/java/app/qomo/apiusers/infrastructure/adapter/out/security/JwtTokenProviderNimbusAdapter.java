@@ -97,6 +97,7 @@ public class JwtTokenProviderNimbusAdapter implements JwtTokenProviderPort {
       Date expiration = signedJWT.getJWTClaimsSet().getExpirationTime();
       return expiration != null && expiration.toInstant().isAfter(now);
     } catch (ParseException | JOSEException e) {
+      // Invalid client-supplied tokens are authentication misses, not request errors.
       return false;
     }
   }

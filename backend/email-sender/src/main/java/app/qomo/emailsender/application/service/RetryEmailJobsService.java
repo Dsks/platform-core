@@ -86,6 +86,7 @@ public class RetryEmailJobsService implements RetryEmailJobsUseCase {
     Instant now = clock.now();
     Instant olderThan = now.minusSeconds(minAgeSeconds);
 
+    // Claiming bounds the sweep and keeps concurrent retry workers from selecting the same jobs.
     List<EmailJobRecord> claimedJobs =
         emailJobRepository.claimRetryCandidates(maxAttempts, olderThan, batchSize, now);
 
@@ -119,6 +120,7 @@ public class RetryEmailJobsService implements RetryEmailJobsUseCase {
         job.toEmailFp());
 
     try {
+      // Retry reconstructs only the command needed for delivery; payloads remain encrypted at rest.
       byte[] decrypted =
           payloadCrypto.decrypt(
               new PayloadCryptoPort.EncryptedPayload(job.payloadEnc(), job.payloadNonce()));
@@ -133,11 +135,14 @@ public class RetryEmailJobsService implements RetryEmailJobsUseCase {
       emailSender.sendHtml(message.toEmail(), verificationSubject, html);
       emailJobRepository.markSent(job.eventId(), now);
     } catch (Exception exception) {
+      // Persist only the sanitized form because renderer or transport errors may include payload
+      // data.
       String sanitizedError = ErrorSanitizer.sanitize(toRuntimeException(exception), null);
       if (currentAttempt >= maxAttempts) {
         // The max-attempts boundary is terminal for retry eligibility.
         emailJobRepository.markDead(job.eventId(), "max_attempts_exceeded", now);
       } else {
+        // FAILED remains eligible for a later claim until the terminal attempt boundary is reached.
         emailJobRepository.markFailed(job.eventId(), sanitizedError, now);
       }
       log.warn(

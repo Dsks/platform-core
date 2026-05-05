@@ -84,6 +84,7 @@ public class UserController {
       @PathVariable @Pattern(regexp = UUID_PATTERN, message = "must be a valid UUID") String id) {
     return getUser
         .getById(UserId.of(id))
+        // Map explicitly so credential material stays outside the HTTP representation.
         .map(
             u ->
                 new UserResponse(

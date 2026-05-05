@@ -61,6 +61,7 @@ public class KafkaConsumerConfig {
         ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG,
         Boolean.parseBoolean(
             environment.getProperty("spring.kafka.consumer.enable-auto-commit", "false")));
+    // Keep payloads as strings so the listener can hash invalid JSON before conversion fails.
     props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     return new DefaultKafkaConsumerFactory<>(props);
@@ -80,6 +81,8 @@ public class KafkaConsumerConfig {
     ConcurrentKafkaListenerContainerFactory<String, String> factory =
         new ConcurrentKafkaListenerContainerFactory<>();
     factory.setConsumerFactory(consumerFactory);
+    // Manual ack lets the listener commit only after invalid input is discarded or safe state
+    // exists.
     factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
     factory.setAutoStartup(
         Boolean.parseBoolean(

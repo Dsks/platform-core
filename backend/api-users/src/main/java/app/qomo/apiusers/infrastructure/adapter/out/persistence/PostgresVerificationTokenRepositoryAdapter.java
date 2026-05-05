@@ -198,6 +198,7 @@ public class PostgresVerificationTokenRepositoryAdapter implements VerificationT
    */
   @Override
   public void invalidateActiveTokens(UserId userId, VerificationToken.Type type, Instant now) {
+    // Consuming old rows preserves token history while making previous codes unusable.
     jdbcTemplate.update(
         SQL_INVALIDATE_ACTIVE_TOKENS, Timestamp.from(now), userId.value(), type.name());
   }

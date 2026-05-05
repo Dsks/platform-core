@@ -57,14 +57,17 @@ public class ResendEmailVerificationService implements ResendEmailVerificationUs
     try {
       email = Email.of(command.email());
     } catch (IllegalArgumentException ex) {
+      // Invalid syntax is treated as a no-session outcome to preserve resend anti-enumeration.
       return new Result(null, 0);
     }
 
     var user = userRepository.findByEmail(email.value());
     if (user.isEmpty() || user.get().isVerified()) {
+      // Unknown and already verified accounts collapse to the same externally generic result.
       return new Result(null, 0);
     }
 
+    // Issuance owns token rotation and resend throttling; this service only gates eligibility.
     var issueResult =
         issueEmailVerificationService.issue(
             user.get().id(), email, "RESEND_ENDPOINT", java.util.UUID.randomUUID().toString());

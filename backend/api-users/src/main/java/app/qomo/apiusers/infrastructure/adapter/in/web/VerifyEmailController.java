@@ -84,6 +84,7 @@ public class VerifyEmailController {
     try {
       parsedSessionId = UUID.fromString(sessionId);
     } catch (IllegalArgumentException ex) {
+      // Malformed session cookies get the same response as absent or expired verification state.
       return ResponseEntity.accepted().body(GENERIC_RESPONSE);
     }
 
@@ -93,6 +94,7 @@ public class VerifyEmailController {
       return ResponseEntity.accepted().body(GENERIC_RESPONSE);
     }
 
+    // Reuse the original attributes so the browser expires the exact verification cookie.
     ResponseCookie clearCookie =
         ResponseCookie.from(verificationCookieName, "")
             .httpOnly(true)

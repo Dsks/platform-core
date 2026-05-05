@@ -105,6 +105,7 @@ public class IssueEmailVerificationService {
     if (latestActive.isPresent()) {
       var lastSentAt = latestActive.get().lastSentAt();
       if (lastSentAt != null && now.isBefore(lastSentAt.plus(resendMinInterval))) {
+        // Rate limiting leaves the active token usable instead of rotating it away.
         log.info(
             "email_verification_resend_rate_limited reason={} userId={} emailFingerprint={}",
             reason,
@@ -114,6 +115,7 @@ public class IssueEmailVerificationService {
       }
     }
 
+    // Rotate active sessions before creating the replacement so only the newest OTP can verify.
     verificationTokenRepository.invalidateActiveTokens(
         userId, VerificationToken.Type.EMAIL_VERIFICATION, now);
 
@@ -125,6 +127,7 @@ public class IssueEmailVerificationService {
         VerificationToken.emailVerificationOtp(
             userId, otpHash, verificationSessionId, now, emailOtpTtl));
 
+    // Persist the token before enqueuing email so a delivered OTP can verify immediately.
     var event =
         EmailVerificationRequestedCommand.emailVerification(
             UUID.randomUUID().toString(),
@@ -169,6 +172,7 @@ public class IssueEmailVerificationService {
     payload.put("occurredAt", command.occurredAt());
     payload.put("type", command.type());
     payload.put("toEmail", command.toEmail());
+    // The OTP appears only in the delivery payload; logs must keep using fingerprints.
     payload.put("verificationCode", command.verificationCode());
     payload.put("template", command.template());
     payload.put("correlationId", command.correlationId());

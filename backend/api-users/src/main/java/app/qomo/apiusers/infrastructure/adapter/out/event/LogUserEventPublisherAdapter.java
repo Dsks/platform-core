@@ -25,6 +25,7 @@ public final class LogUserEventPublisherAdapter implements UserEventPublisherPor
    */
   @Override
   public void userCreated(User user) {
+    // Fingerprinting keeps event logs correlatable without emitting the raw email address.
     var email_fp = PiiUtil.emailFingerprint(String.valueOf(user.email().value()));
     log.info("event=user_created userId={} email={}", user.id(), email_fp);
   }

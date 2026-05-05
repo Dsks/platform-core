@@ -84,6 +84,7 @@ public class EmailCommandsConsumer {
       topics = "${qomo.kafka.topics.email-commands:qomo.email.commands}",
       groupId = "${spring.kafka.consumer.group-id:qomo-email-sender}")
   public void consume(String payload, Acknowledgment ack) {
+    // Normalize null records into the invalid-payload path while keeping logs fingerprint-only.
     String safePayload = payload == null ? "" : payload;
     String payloadSha = hashUtil.sha256Hex(safePayload);
 
@@ -93,6 +94,7 @@ public class EmailCommandsConsumer {
     try {
       message = objectMapper.readValue(safePayload, EmailCommandMessage.class);
     } catch (JsonProcessingException ex) {
+      // Malformed JSON is terminal input; redelivery would only repeat the same parse failure.
       log.warn(
           "email_command_invalid reason={} sha={} size={}",
           "json_parse_error",
@@ -127,6 +129,7 @@ public class EmailCommandsConsumer {
           safePayload.length());
       decision = AckDecision.ACK_DISCARD_INVALID;
     } catch (RuntimeException exception) {
+      // Leave the offset uncommitted so Kafka/container retry policy handles unexpected failures.
       log.error(
           "email_command_processing_failed sha={} size={}",
           payloadSha,
@@ -209,6 +212,7 @@ public class EmailCommandsConsumer {
     if (isBlank(message.verificationCode())) {
       return "verificationCode_blank";
     }
+    // Format checks are intentionally limited to the command pair this adapter understands.
     if (isSupportedVerificationCommand(message)
         && !SIMPLE_EMAIL.matcher(message.toEmail().trim()).matches()) {
       return "toEmail_invalid_format";

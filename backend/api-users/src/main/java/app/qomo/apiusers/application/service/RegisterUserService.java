@@ -87,6 +87,7 @@ public class RegisterUserService implements RegisterUserUseCase {
 
     final Email email;
     try {
+      // Canonicalize before lookup so registration uses the same email identity everywhere.
       email = Email.of(command.email());
     } catch (IllegalArgumentException ex) {
       throw new InvalidCommandException("email", "invalid");
@@ -102,6 +103,7 @@ public class RegisterUserService implements RegisterUserUseCase {
                 existing.get().id(), email, "REGISTER_EXISTING_UNVERIFIED", requestId);
         return new Result(requestId, issueResult.verificationSessionId(), issueResult.ttlSeconds());
       }
+      // A verified existing account is accepted without a session to avoid account enumeration.
       return new Result(requestId, null, 0);
     }
 
@@ -118,6 +120,7 @@ public class RegisterUserService implements RegisterUserUseCase {
     user.addRole(defaultRole, now);
     userRepository.save(user);
 
+    // The user is persisted first so the verification outbox event references an existing user.
     var issueResult = issueEmailVerificationService.issue(id, email, "REGISTER_NEW", requestId);
     return new Result(requestId, issueResult.verificationSessionId(), issueResult.ttlSeconds());
   }

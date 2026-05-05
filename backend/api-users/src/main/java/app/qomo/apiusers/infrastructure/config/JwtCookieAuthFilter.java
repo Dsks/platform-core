@@ -56,6 +56,7 @@ public class JwtCookieAuthFilter extends OncePerRequestFilter {
 
     if (jwt != null && jwtTokenProvider.validate(jwt, clock.now())) {
       String subject = jwtTokenProvider.subject(jwt);
+      // Roles are trusted only after signature and expiry validation.
       var authorities =
           jwtTokenProvider.roles(jwt).stream()
               .map(role -> new SimpleGrantedAuthority("ROLE_" + role))

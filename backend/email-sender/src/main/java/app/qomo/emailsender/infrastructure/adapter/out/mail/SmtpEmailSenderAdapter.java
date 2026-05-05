@@ -47,6 +47,8 @@ public class SmtpEmailSenderAdapter implements EmailSenderPort {
       helper.setText(html, true);
       javaMailSender.send(mimeMessage);
     } catch (MessagingException exception) {
+      // Only MIME construction is normalized; transport/runtime failures keep mail-sender
+      // semantics.
       throw new IllegalStateException("Unable to build email message", exception);
     }
   }

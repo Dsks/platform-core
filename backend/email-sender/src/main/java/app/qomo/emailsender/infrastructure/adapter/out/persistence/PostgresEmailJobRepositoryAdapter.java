@@ -76,6 +76,7 @@ public class PostgresEmailJobRepositoryAdapter implements EmailJobRepositoryPort
           tsNow);
       return true;
     } catch (DuplicateKeyException e) {
+      // Database uniqueness is the idempotency gate; the already-stored job is left untouched.
       return false;
     }
   }
@@ -138,6 +139,7 @@ public class PostgresEmailJobRepositoryAdapter implements EmailJobRepositoryPort
   @Override
   public List<EmailJobRecord> claimRetryCandidates(
       int maxAttempts, Instant olderThan, int limit, Instant now) {
+    // The CTE locks a bounded ordered batch before UPDATE so RETURNING is the claimed set.
     return jdbcTemplate.query(
         """
              WITH candidates AS (

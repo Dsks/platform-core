@@ -74,6 +74,7 @@ public class SuperAdminBootstrap implements ApplicationRunner {
     var email = new Email(superAdminEmail);
     var emailFingerprint = PiiUtil.emailFingerprint(email.value());
 
+    // A blank bootstrap password disables privileged account creation by configuration.
     if (superAdminInitialPassword == null || superAdminInitialPassword.isBlank()) {
       log.warn(
           "superadmin_bootstrap_skipped reason=missing_initial_password email_fp={}",

@@ -77,6 +77,7 @@ public class PostgresOutboxRepositoryAdapter implements OutboxRepositoryPort {
    */
   @Override
   public List<OutboxEvent> claimPublishable(int batchSize, Instant olderThan, Instant now) {
+    // Claim and state transition happen together so concurrent publishers do not race.
     return jdbcTemplate.query(
         """
              WITH claimable AS (
@@ -214,6 +215,7 @@ public class PostgresOutboxRepositoryAdapter implements OutboxRepositoryPort {
     if (error == null) {
       return null;
     }
+    // Keep retry diagnostics compact before storing them on long-lived outbox rows.
     String compact = error.replaceAll("\\s+", " ").trim();
     if (compact.length() <= LAST_ERROR_MAX_LENGTH) {
       return compact;

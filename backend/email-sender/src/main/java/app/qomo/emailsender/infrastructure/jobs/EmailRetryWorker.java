@@ -35,6 +35,7 @@ public class EmailRetryWorker {
    */
   @Scheduled(fixedDelayString = "${qomo.email.retry.fixed-delay-ms:30000}")
   public void retryFailedJobs() {
+    // Fixed delay spaces retry passes from completion time, including slow SMTP/database work.
     retryEmailJobsUseCase.retryFailedJobs();
   }
 }

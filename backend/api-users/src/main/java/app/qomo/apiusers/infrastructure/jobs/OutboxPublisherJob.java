@@ -94,6 +94,7 @@ public class OutboxPublisherJob {
         outboxPublisher.publish(event);
         outboxRepository.markSent(event.id(), now);
       } catch (RuntimeException ex) {
+        // Persist only the message text; the repository compacts and bounds it before storage.
         String message = ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage();
         if (event.attempts() + 1 >= maxAttempts) {
           outboxRepository.markDead(event.id(), message, now);

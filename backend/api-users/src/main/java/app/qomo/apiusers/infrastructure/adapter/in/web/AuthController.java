@@ -98,6 +98,7 @@ public class AuthController {
     var result = loginUseCase.login(new LoginUseCase.Command(request.email(), request.password()));
 
     if (result.emailNotVerified()) {
+      // Hold back the auth cookie until verification succeeds; this cookie only resumes OTP flow.
       var pd = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, "Login not completed");
       pd.setTitle("EMAIL_NOT_VERIFIED");
       pd.setType(URI.create("https://qomo.app/problems/EMAIL_NOT_VERIFIED"));
@@ -151,6 +152,7 @@ public class AuthController {
         registerUserUseCase.register(
             new RegisterUserUseCase.Command(request.email(), request.password()));
 
+    // The body stays generic regardless of whether persistence created a new account.
     var body = new RegistrationAcceptedResponse(result.requestId(), REGISTRATION_ACCEPTED_MESSAGE);
     if (result.verificationSessionId() == null) {
       return ResponseEntity.accepted().body(body);

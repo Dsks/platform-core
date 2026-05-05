@@ -76,10 +76,12 @@ public class LoginService implements LoginUseCase {
 
     var user =
         userRepository
+            // Use the domain email value so credential checks run against the canonical lookup key.
             .findByEmail(new Email(command.email()).value())
             .orElseThrow(InvalidCredentialsException::new);
 
     if (!passwordVerifier.matches(command.password(), user.passwordHash())) {
+      // Unknown emails and password mismatches share the same exception boundary.
       throw new InvalidCredentialsException();
     }
 
@@ -88,6 +90,7 @@ public class LoginService implements LoginUseCase {
     }
 
     if (!user.isVerified()) {
+      // Valid credentials for unverified accounts trigger verification, not a completed login.
       var correlationId = java.util.UUID.randomUUID().toString();
       var issueResult =
           issueEmailVerificationService.issue(

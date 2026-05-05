@@ -209,6 +209,7 @@ public class ApiExceptionHandler {
   /** Removes client-visible params for errors whose raw details could leak account existence. */
   private Object safeClientParams(String code, Map<String, Object> original) {
     if ("USER_EMAIL_ALREADY_IN_USE".equals(code)) {
+      // Client-visible params must not confirm which email is already registered.
       return Map.of();
     }
     return original;

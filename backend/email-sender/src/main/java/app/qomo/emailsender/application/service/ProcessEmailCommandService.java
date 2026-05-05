@@ -98,6 +98,7 @@ public class ProcessEmailCommandService implements ProcessEmailCommandUseCase {
       return EmailCommandProcessingOutcome.COMPLETED;
     }
 
+    // Create durable retry state before delivery so a later broker ack cannot lose the email job.
     boolean created =
         emailJobRepository.tryCreatePending(
             eventId,
@@ -131,6 +132,7 @@ public class ProcessEmailCommandService implements ProcessEmailCommandUseCase {
           emailFingerprint);
       return EmailCommandProcessingOutcome.COMPLETED;
     } catch (RuntimeException exception) {
+      // Redact the one-time code before the failure reason is persisted or emitted.
       String sanitizedError = ErrorSanitizer.sanitize(exception, message.verificationCode());
       emailJobRepository.markFailed(eventId, sanitizedError, now);
       log.warn(
@@ -140,6 +142,7 @@ public class ProcessEmailCommandService implements ProcessEmailCommandUseCase {
           message.template(),
           emailFingerprint,
           sanitizedError);
+      // FAILED is now durable, so the retry sweep owns future delivery attempts.
       return EmailCommandProcessingOutcome.RECOVERABLE_STATE_PERSISTED;
     }
   }

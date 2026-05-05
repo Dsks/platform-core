@@ -96,10 +96,12 @@ public class CreateUserService implements CreateUserUseCase {
     var email = new Email(command.email());
 
     if (userRepository.existsByEmail(email.value())) {
+      // Administrative creation may expose duplicate-email conflicts unlike public registration.
       throw new EmailAlreadyInUseException(email.value());
     }
 
     Set<String> requestedRoles = normalizeRoles(command.roles());
+    // Apply permission policy only after role names are canonicalized.
     validateRolePermissions(requestedRoles);
 
     var now = clock.now();
@@ -117,6 +119,7 @@ public class CreateUserService implements CreateUserUseCase {
     }
 
     var saved = userRepository.save(user);
+    // Publish after persistence so consumers observe a durable user id.
     eventPublisher.userCreated(saved);
 
     return new Result(saved.id());

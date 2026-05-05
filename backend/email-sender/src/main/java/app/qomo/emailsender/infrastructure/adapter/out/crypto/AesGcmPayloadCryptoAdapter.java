@@ -38,6 +38,7 @@ public final class AesGcmPayloadCryptoAdapter implements PayloadCryptoPort {
   public AesGcmPayloadCryptoAdapter(String keyB64) {
     byte[] key = Base64.getDecoder().decode(keyB64);
     if (key.length != 32) {
+      // Fail fast at wiring time so malformed key material cannot process persisted payloads.
       throw new IllegalArgumentException("PAYLOAD_KEY_B64 must decode to 32 bytes (AES-256)");
     }
     this.keySpec = new SecretKeySpec(key, ALG);
@@ -53,6 +54,7 @@ public final class AesGcmPayloadCryptoAdapter implements PayloadCryptoPort {
   public EncryptedPayload encrypt(byte[] plaintext) {
     try {
       byte[] nonce = new byte[NONCE_LEN];
+      // GCM nonce uniqueness is critical, so each persisted payload gets fresh random bytes.
       secureRandom.nextBytes(nonce);
 
       Cipher cipher = Cipher.getInstance(TRANSFORMATION);
@@ -78,6 +80,7 @@ public final class AesGcmPayloadCryptoAdapter implements PayloadCryptoPort {
       cipher.init(Cipher.DECRYPT_MODE, keySpec, new GCMParameterSpec(TAG_BITS, encrypted.nonce()));
       return cipher.doFinal(encrypted.ciphertext());
     } catch (Exception e) {
+      // Collapse auth and format failures to avoid leaking whether key or ciphertext was wrong.
       throw new IllegalStateException("payload_decrypt_failed", e);
     }
   }

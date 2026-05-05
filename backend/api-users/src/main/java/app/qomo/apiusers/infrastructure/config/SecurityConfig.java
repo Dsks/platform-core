@@ -95,6 +95,7 @@ public class SecurityConfig {
   public SecurityFilterChain securityFilterChain(
       HttpSecurity http, JwtCookieAuthFilter jwtFilter, CsrfTokenRepository csrfTokenRepository)
       throws Exception {
+    // CSRF stays active for protected browser writes; only pre-auth flows are exempted.
     http.csrf(
             csrf ->
                 csrf.csrfTokenRepository(csrfTokenRepository)

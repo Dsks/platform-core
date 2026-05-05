@@ -47,6 +47,7 @@ public class SecurityCurrentUserAdapter implements CurrentUserPort {
       return Set.of();
     }
 
+    // Only role authorities cross the port; other Spring authorities stay infrastructure-local.
     return authentication.getAuthorities().stream()
         .map(authority -> authority.getAuthority())
         .filter(authority -> authority != null && authority.startsWith("ROLE_"))
