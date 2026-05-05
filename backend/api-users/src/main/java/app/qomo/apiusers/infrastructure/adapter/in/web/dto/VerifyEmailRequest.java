@@ -1,5 +1,6 @@
 package app.qomo.apiusers.infrastructure.adapter.in.web.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 
 /**
@@ -9,4 +10,12 @@ import jakarta.validation.constraints.NotBlank;
  *
  * @param code one-time verification code supplied by the user; must not be blank
  */
-public record VerifyEmailRequest(@NotBlank String code) {}
+@Schema(description = "Request for completing email verification with a one-time code.")
+public record VerifyEmailRequest(
+    @NotBlank
+        @Schema(
+            description =
+                "Sensitive one-time email verification code supplied by the user. The response"
+                    + " remains generic when verification cannot be completed.",
+            writeOnly = true)
+        String code) {}
