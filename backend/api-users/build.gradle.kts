@@ -39,6 +39,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("com.nimbusds:nimbus-jose-jwt:10.7")
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
     implementation("org.springframework.kafka:spring-kafka")
     implementation("org.springframework.boot:spring-boot-starter-json")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
@@ -83,7 +84,9 @@ configurations.named("crossServiceE2eRuntimeOnly") {
 }
 
 dependencies {
-    add("crossServiceE2eImplementation", "app.qomo:email-sender:0.0.1-SNAPSHOT")
+    if (emailSenderDir.isDirectory) {
+        add("crossServiceE2eImplementation", "app.qomo:email-sender:0.0.1-SNAPSHOT")
+    }
 }
 
 configure<com.diffplug.gradle.spotless.SpotlessExtension> {
@@ -107,6 +110,11 @@ tasks.withType<Test>().configureEach {
 tasks.register<Test>("crossServiceE2eTest") {
     description = "Runs minimal cross-service E2E tests between api-users and email-sender."
     group = "verification"
+    doFirst {
+        check(emailSenderDir.isDirectory) {
+            "crossServiceE2eTest requires ../email-sender. Run it from the full backend repository checkout."
+        }
+    }
     testClassesDirs = sourceSets["crossServiceE2e"].output.classesDirs
     classpath = sourceSets["crossServiceE2e"].runtimeClasspath
     shouldRunAfter(tasks.test)

@@ -4,6 +4,15 @@ import app.qomo.apiusers.application.port.in.ResendEmailVerificationUseCase;
 import app.qomo.apiusers.application.port.in.VerifyEmailUseCase;
 import app.qomo.apiusers.infrastructure.adapter.in.web.dto.ResendVerificationRequest;
 import app.qomo.apiusers.infrastructure.adapter.in.web.dto.VerifyEmailRequest;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -13,6 +22,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,6 +41,9 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/v1/users")
+@Tag(
+    name = "Email Verification",
+    description = "Verification code confirmation and resend flow endpoints.")
 public class VerifyEmailController {
 
   private static final Map<String, String> GENERIC_RESPONSE = Map.of("message", "Code Not Found");
@@ -72,9 +85,67 @@ public class VerifyEmailController {
    * @param request validated verification code from the JSON request body
    * @return generic accepted response for non-successful attempts, or no content after success
    */
+  @Operation(
+      summary = "Confirm an email verification code",
+      description =
+          "Attempts to complete email verification using a one-time code and the QOMO_VERIF"
+              + " verification cookie. Successful verification returns no body and clears the"
+              + " verification cookie. Non-successful verification attempts return the same generic"
+              + " accepted response to avoid revealing account or verification state.",
+      parameters =
+          @Parameter(
+              name = "QOMO_VERIF",
+              in = ParameterIn.COOKIE,
+              required = false,
+              description =
+                  "Verification-session cookie used to continue the email-verification flow. The"
+                      + " cookie value is sensitive and is not documented.",
+              schema = @Schema(type = "string")))
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "204",
+        description = "Email verification completed. The verification cookie is cleared.",
+        headers =
+            @Header(
+                name = "Set-Cookie",
+                description =
+                    "Clears the QOMO_VERIF verification cookie. The cookie value is not"
+                        + " documented.",
+                schema = @Schema(type = "string")),
+        content = @Content()),
+    @ApiResponse(
+        responseCode = "202",
+        description =
+            "Generic accepted response when verification cannot be completed without revealing the"
+                + " cause.",
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema =
+                    @Schema(
+                        implementation = Map.class,
+                        description = "Generic response containing a message field."))),
+    @ApiResponse(
+        responseCode = "400",
+        description = "The request body is malformed or fails validation.",
+        content =
+            @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class)))
+  })
   @PostMapping("/verify-email")
   public ResponseEntity<?> verifyEmail(
-      HttpServletRequest servletRequest, @Valid @RequestBody VerifyEmailRequest request) {
+      @Parameter(hidden = true) HttpServletRequest servletRequest,
+      @io.swagger.v3.oas.annotations.parameters.RequestBody(
+              description = "One-time email verification code submitted by the browser client.",
+              required = true,
+              content =
+                  @Content(
+                      mediaType = "application/json",
+                      schema = @Schema(implementation = VerifyEmailRequest.class)))
+          @Valid
+          @RequestBody
+          VerifyEmailRequest request) {
     String sessionId = readCookie(servletRequest, verificationCookieName);
     if (sessionId == null) {
       return ResponseEntity.accepted().body(GENERIC_RESPONSE);
@@ -123,9 +194,51 @@ public class VerifyEmailController {
    * @param request validated email address from the JSON request body
    * @return generic accepted response, optionally with a refreshed verification-session cookie
    */
+  @Operation(
+      summary = "Request another email verification code",
+      description =
+          "Accepts a verification resend request and returns a generic accepted response. The"
+              + " response intentionally does not reveal whether the email exists, whether a user"
+              + " can be verified, or whether a code was sent. When applicable, the response may"
+              + " set or refresh the QOMO_VERIF verification cookie.")
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "202",
+        description = "Resend request accepted with a generic anti-enumeration response.",
+        headers =
+            @Header(
+                name = "Set-Cookie",
+                description =
+                    "May set or refresh the QOMO_VERIF verification cookie. The cookie value is"
+                        + " sensitive and is not documented.",
+                schema = @Schema(type = "string")),
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema =
+                    @Schema(
+                        implementation = Map.class,
+                        description = "Generic response containing a message field."))),
+    @ApiResponse(
+        responseCode = "400",
+        description = "The request body is malformed or fails validation.",
+        content =
+            @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class)))
+  })
   @PostMapping("/verification/resend")
   public ResponseEntity<?> resendVerification(
-      @Valid @RequestBody ResendVerificationRequest request) {
+      @io.swagger.v3.oas.annotations.parameters.RequestBody(
+              description = "Email address submitted for a generic verification resend request.",
+              required = true,
+              content =
+                  @Content(
+                      mediaType = "application/json",
+                      schema = @Schema(implementation = ResendVerificationRequest.class)))
+          @Valid
+          @RequestBody
+          ResendVerificationRequest request) {
     var result =
         resendEmailVerificationUseCase.resend(
             new ResendEmailVerificationUseCase.Command(request.email()));

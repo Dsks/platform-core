@@ -1,5 +1,6 @@
 package app.qomo.apiusers.infrastructure.adapter.in.web.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
@@ -9,4 +10,18 @@ import jakarta.validation.constraints.NotBlank;
  * @param email account email used for credential lookup; must be non-blank and syntactically valid
  * @param password raw password from the request body; must be non-blank and is never echoed
  */
-public record LoginRequest(@NotBlank @Email String email, @NotBlank String password) {}
+@Schema(description = "Credentials used to create a browser authentication session.")
+public record LoginRequest(
+    @NotBlank
+        @Email
+        @Schema(
+            description = "Account email used for credential lookup.",
+            format = "email",
+            example = "user@example.com")
+        String email,
+    @NotBlank
+        @Schema(
+            description = "Raw account password. The value is accepted only in requests.",
+            writeOnly = true,
+            example = "StrongPassw0rd!")
+        String password) {}

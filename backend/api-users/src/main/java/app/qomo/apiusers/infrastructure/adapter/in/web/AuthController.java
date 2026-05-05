@@ -7,6 +7,13 @@ import app.qomo.apiusers.application.port.out.JwtTokenProviderPort;
 import app.qomo.apiusers.infrastructure.adapter.in.web.dto.LoginRequest;
 import app.qomo.apiusers.infrastructure.adapter.in.web.dto.RegisterRequest;
 import app.qomo.apiusers.infrastructure.adapter.in.web.dto.RegistrationAcceptedResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.time.Duration;
@@ -36,6 +43,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/v1/auth")
+@Tag(name = "Auth", description = "Registration, login, and CSRF bootstrap endpoints.")
 public class AuthController {
 
   public static final String AUTH_COOKIE_NAME = "QOMO_AUTH";
@@ -93,8 +101,67 @@ public class AuthController {
    * @return a no-content response with the auth cookie, or a problem response for an unverified
    *     account
    */
+  @Operation(
+      summary = "Create an authentication session",
+      description =
+          "Authenticates browser credentials. A successful login returns no body and sets the"
+              + " QOMO_AUTH HTTP cookie. Invalid credentials and accounts that still require email"
+              + " verification or cannot complete login are returned as problem details.")
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "204",
+        description = "Login completed. The QOMO_AUTH cookie is set on the response.",
+        headers =
+            @Header(
+                name = "Set-Cookie",
+                description =
+                    "Sets the QOMO_AUTH HTTP-only authentication cookie. The cookie value is"
+                        + " sensitive and is not documented.",
+                schema = @Schema(type = "string")),
+        content = @Content()),
+    @ApiResponse(
+        responseCode = "400",
+        description = "The request body is malformed or fails validation.",
+        content =
+            @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class))),
+    @ApiResponse(
+        responseCode = "401",
+        description = "Credentials are invalid.",
+        content =
+            @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class))),
+    @ApiResponse(
+        responseCode = "403",
+        description =
+            "Login cannot be completed for the account state. When email verification is required,"
+                + " a verification-session cookie may be set.",
+        headers =
+            @Header(
+                name = "Set-Cookie",
+                description =
+                    "May set a verification-session cookie so the browser can continue the"
+                        + " email-verification flow. No authentication cookie is issued.",
+                schema = @Schema(type = "string")),
+        content =
+            @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class)))
+  })
   @PostMapping("/login")
-  public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+  public ResponseEntity<?> login(
+      @io.swagger.v3.oas.annotations.parameters.RequestBody(
+              description = "Credentials submitted for browser login.",
+              required = true,
+              content =
+                  @Content(
+                      mediaType = "application/json",
+                      schema = @Schema(implementation = LoginRequest.class)))
+          @Valid
+          @RequestBody
+          LoginRequest request) {
     var result = loginUseCase.login(new LoginUseCase.Command(request.email(), request.password()));
 
     if (result.emailNotVerified()) {
@@ -144,9 +211,48 @@ public class AuthController {
    * @param request validated email and password from the JSON request body
    * @return a generic accepted response, optionally with a verification-session cookie
    */
+  @Operation(
+      summary = "Register a user account",
+      description =
+          "Accepts a public registration request and returns a generic accepted response. The"
+              + " response intentionally does not reveal whether the submitted email already"
+              + " belongs to an account. When applicable, the response may set a verification"
+              + " cookie for the email-verification flow.")
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "202",
+        description = "Registration request accepted with a generic anti-enumeration response.",
+        headers =
+            @Header(
+                name = "Set-Cookie",
+                description =
+                    "May set a verification-session HTTP-only cookie. The cookie value is"
+                        + " sensitive and is not documented.",
+                schema = @Schema(type = "string")),
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = RegistrationAcceptedResponse.class))),
+    @ApiResponse(
+        responseCode = "400",
+        description = "The request body is malformed or fails validation.",
+        content =
+            @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class)))
+  })
   @PostMapping("/register")
   public ResponseEntity<RegistrationAcceptedResponse> register(
-      @Valid @RequestBody RegisterRequest request) {
+      @io.swagger.v3.oas.annotations.parameters.RequestBody(
+              description = "Registration data submitted by the browser client.",
+              required = true,
+              content =
+                  @Content(
+                      mediaType = "application/json",
+                      schema = @Schema(implementation = RegisterRequest.class)))
+          @Valid
+          @RequestBody
+          RegisterRequest request) {
 
     var result =
         registerUserUseCase.register(
@@ -179,6 +285,23 @@ public class AuthController {
    * @param csrfToken framework-provided token for the current request
    * @return token metadata and value for the client
    */
+  @Operation(
+      summary = "Fetch CSRF token details",
+      description =
+          "Returns the CSRF token metadata needed for state-changing requests. Clients should send"
+              + " the token value in the response-provided header name. Token values are sensitive"
+              + " and are not documented as examples.")
+  @ApiResponse(
+      responseCode = "200",
+      description = "CSRF token metadata for browser clients.",
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema =
+                  @Schema(
+                      implementation = Map.class,
+                      description =
+                          "Object containing headerName, parameterName, and token fields.")))
   @GetMapping("/csrf")
   public ResponseEntity<Map<String, String>> csrf(CsrfToken csrfToken) {
     return ResponseEntity.ok(
