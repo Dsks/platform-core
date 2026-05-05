@@ -1,4 +1,4 @@
-package app.qomo.emailsender.application.model;
+package app.qomo.emailsender.application.command;
 
 public record EmailCommandMessage(
     String eventId,

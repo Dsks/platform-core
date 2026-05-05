@@ -9,8 +9,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import app.qomo.emailsender.application.command.EmailCommandMessage;
 import app.qomo.emailsender.application.exception.InvalidEmailCommandException;
-import app.qomo.emailsender.application.model.EmailCommandMessage;
 import app.qomo.emailsender.application.observability.HashUtil;
 import app.qomo.emailsender.application.port.in.ProcessEmailCommandUseCase;
 import com.fasterxml.jackson.core.JsonProcessingException;

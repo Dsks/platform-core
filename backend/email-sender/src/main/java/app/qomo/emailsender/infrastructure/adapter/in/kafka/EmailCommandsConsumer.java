@@ -1,7 +1,7 @@
 package app.qomo.emailsender.infrastructure.adapter.in.kafka;
 
+import app.qomo.emailsender.application.command.EmailCommandMessage;
 import app.qomo.emailsender.application.exception.InvalidEmailCommandException;
-import app.qomo.emailsender.application.model.EmailCommandMessage;
 import app.qomo.emailsender.application.observability.HashUtil;
 import app.qomo.emailsender.application.port.in.ProcessEmailCommandUseCase;
 import app.qomo.emailsender.application.port.in.ProcessEmailCommandUseCase.EmailCommandProcessingOutcome;

@@ -69,6 +69,7 @@ val jacocoExcludes = listOf(
     "**/*Application*",
     "**/dto/**",
     "**/model/**",
+    "**/command/**",
     "**/entity/**",
     "**/common/**",
     "**/advice/**",

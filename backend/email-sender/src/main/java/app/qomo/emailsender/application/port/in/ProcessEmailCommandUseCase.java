@@ -1,6 +1,6 @@
 package app.qomo.emailsender.application.port.in;
 
-import app.qomo.emailsender.application.model.EmailCommandMessage;
+import app.qomo.emailsender.application.command.EmailCommandMessage;
 
 public interface ProcessEmailCommandUseCase {
 

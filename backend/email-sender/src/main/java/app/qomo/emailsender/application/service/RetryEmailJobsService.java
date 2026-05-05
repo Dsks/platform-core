@@ -1,6 +1,6 @@
 package app.qomo.emailsender.application.service;
 
-import app.qomo.emailsender.application.model.EmailCommandMessage;
+import app.qomo.emailsender.application.command.EmailCommandMessage;
 import app.qomo.emailsender.application.port.in.RetryEmailJobsUseCase;
 import app.qomo.emailsender.application.port.out.ClockPort;
 import app.qomo.emailsender.application.port.out.EmailJobRepositoryPort;
