@@ -14,6 +14,20 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
 
+/**
+ * Centralizes HTTP security wiring for the users API.
+ *
+ * <p>The configuration connects the JWT cookie filter to Spring Security, exposes the CSRF token
+ * repository used by browser clients, and defines which user-management routes are public,
+ * role-gated, or authenticated. It consumes CSRF cookie attributes from external properties and
+ * leaves token creation, password hashing, and application use-case wiring to {@link
+ * UsersBeansConfig}.
+ *
+ * <p>The chain is intentionally stateless: authenticated requests are reconstructed from the JWT
+ * cookie on each call instead of relying on server-side sessions. Public authentication and email
+ * verification endpoints are excluded from CSRF checks because they need to be callable before a
+ * client has an authenticated session context.
+ */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -21,6 +35,14 @@ public class SecurityConfig {
   private final boolean csrfCookieSecure;
   private final String csrfCookieSameSite;
 
+  /**
+   * Captures runtime CSRF cookie attributes applied by {@link #csrfTokenRepository()}.
+   *
+   * @param csrfCookieSecure value of {@code qomo.security.csrf.cookie.secure}; defaults to {@code
+   *     true}
+   * @param csrfCookieSameSite value of {@code qomo.security.csrf.cookie.same-site}; defaults to
+   *     {@code Lax}
+   */
   public SecurityConfig(
       @Value("${qomo.security.csrf.cookie.secure:true}") boolean csrfCookieSecure,
       @Value("${qomo.security.csrf.cookie.same-site:Lax}") String csrfCookieSameSite) {
@@ -28,12 +50,26 @@ public class SecurityConfig {
     this.csrfCookieSameSite = csrfCookieSameSite;
   }
 
+  /**
+   * Exposes the filter that authenticates requests from the JWT auth cookie.
+   *
+   * @param jwtTokenProviderPort outbound security port used to validate and read JWT claims
+   * @param clockPort shared time port used during token validation
+   */
   @Bean
   public JwtCookieAuthFilter jwtCookieAuthFilter(
       JwtTokenProviderPort jwtTokenProviderPort, ClockPort clockPort) {
     return new JwtCookieAuthFilter(jwtTokenProviderPort, clockPort);
   }
 
+  /**
+   * Stores CSRF tokens in a browser-readable cookie for clients that submit the token on protected
+   * state-changing requests.
+   *
+   * <p>The cookie path is application-wide, while {@code Secure} and {@code SameSite} are
+   * controlled by the constructor properties so deployments can tune browser behavior without
+   * changing the filter chain.
+   */
   @Bean
   public CsrfTokenRepository csrfTokenRepository() {
     CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
@@ -42,6 +78,19 @@ public class SecurityConfig {
     return repository;
   }
 
+  /**
+   * Builds the HTTP authorization chain for the users API.
+   *
+   * <p>Login, registration, CSRF token retrieval, email verification, verification resend, and
+   * health checks are public. User creation is limited to ADMIN and SUPERADMIN roles, other users
+   * routes require authentication, and every remaining route is protected by default. The JWT
+   * cookie filter runs before username/password authentication so the security context is populated
+   * from the signed cookie before authorization rules are evaluated.
+   *
+   * @param http Spring Security builder supplied by the framework
+   * @param jwtFilter filter that extracts and validates the JWT auth cookie
+   * @param csrfTokenRepository CSRF repository with runtime cookie attributes
+   */
   @Bean
   public SecurityFilterChain securityFilterChain(
       HttpSecurity http, JwtCookieAuthFilter jwtFilter, CsrfTokenRepository csrfTokenRepository)

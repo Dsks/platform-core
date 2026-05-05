@@ -10,6 +10,19 @@ import app.qomo.apiusers.application.port.out.UserRepositoryPort;
 import app.qomo.apiusers.domain.model.Email;
 import java.util.Objects;
 
+/**
+ * Orchestrates password-based authentication for user accounts.
+ *
+ * <p>The service coordinates user lookup, password-hash verification, account lifecycle checks,
+ * login timestamp persistence, and email-verification issuance for valid but unverified accounts.
+ * It deliberately returns generic credential failures for unknown emails and password mismatches so
+ * callers do not learn which credential component failed.
+ *
+ * <p>JWT generation and cookie handling are outside this service: a successful verified login
+ * returns the domain user for the adapter or token layer to continue the session flow. Plaintext
+ * passwords, password hashes, OTPs, verification-session identifiers, and token material must not
+ * be logged in clear text.
+ */
 public class LoginService implements LoginUseCase {
 
   private final UserRepositoryPort userRepository;
@@ -31,6 +44,24 @@ public class LoginService implements LoginUseCase {
             issueEmailVerificationService, "issueEmailVerificationService cannot be null");
   }
 
+  /**
+   * Authenticates a user by email and password, or returns an email-verification challenge state
+   * when credentials are valid for an unverified account.
+   *
+   * <p>Unknown emails and invalid passwords both raise {@link InvalidCredentialsException}.
+   * Inactive accounts are rejected after credentials match. Successful verified logins update the
+   * user's last-login timestamp and persist the aggregate; unverified logins issue or rate-limit a
+   * verification challenge and do not record a completed login.
+   *
+   * @param command credentials submitted by the caller
+   * @return the authenticated user for verified accounts, or a verification-required result with
+   *     session metadata for valid unverified accounts
+   * @throws InvalidCommandException when the command, email, or password is missing
+   * @throws InvalidCredentialsException when the email is unknown or the password does not match
+   *     the stored hash
+   * @throws UserInactiveException when the account exists, credentials match, and the account is
+   *     inactive
+   */
   @Override
   public Result login(Command command) {
     if (command == null) {

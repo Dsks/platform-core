@@ -20,6 +20,19 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * Orchestrates administrative user creation.
+ *
+ * <p>The service coordinates the current-user context, role repository, user repository, password
+ * hasher, event publisher, and clock. It protects administrative invariants around email
+ * uniqueness, role assignment policy, and password handling: plaintext credentials are hashed
+ * before persistence, only allowed target roles can be assigned, and creating an ADMIN account
+ * requires the current actor to hold SUPERADMIN.
+ *
+ * <p>This flow creates the account directly and publishes the user-created event; it does not issue
+ * email-verification challenges. Raw passwords, password hashes, and personal data should not be
+ * logged in clear text by callers or adapters.
+ */
 public class CreateUserService implements CreateUserUseCase {
 
   private static final String DEFAULT_ROLE = "USER";
@@ -49,6 +62,25 @@ public class CreateUserService implements CreateUserUseCase {
     this.currentUser = Objects.requireNonNull(currentUser, "currentUser cannot be null");
   }
 
+  /**
+   * Creates a user from an administrative entry point and assigns the requested roles after
+   * applying role policy.
+   *
+   * <p>Missing command, email, or raw password values are rejected before business processing.
+   * Duplicate emails fail explicitly because this administrative flow is allowed to expose that
+   * conflict. Null, blank, or absent role requests are normalized to the default USER role before
+   * permission checks and role lookup. A successful call persists the user and publishes the
+   * user-created event.
+   *
+   * @param command administrative creation command containing email, plaintext password, and
+   *     optional roles
+   * @return the id of the persisted user
+   * @throws InvalidCommandException when the command, email, or raw password is missing
+   * @throws EmailAlreadyInUseException when the canonical email is already assigned to a user
+   * @throws ForbiddenOperationException when the requested roles are outside the allowed target set
+   *     or the current actor may not create an ADMIN user
+   * @throws RoleNotFoundException when an allowed requested role cannot be resolved
+   */
   @Override
   public Result create(Command command) {
     if (command == null) {
@@ -90,6 +122,12 @@ public class CreateUserService implements CreateUserUseCase {
     return new Result(saved.id());
   }
 
+  /**
+   * Converts caller-provided role names into the canonical policy vocabulary.
+   *
+   * <p>Blank entries are ignored and an empty effective set falls back to USER so role assignment
+   * is deterministic even when adapters omit optional role data.
+   */
   private Set<String> normalizeRoles(Set<String> roles) {
     if (roles == null || roles.isEmpty()) {
       return Set.of(DEFAULT_ROLE);
@@ -109,6 +147,12 @@ public class CreateUserService implements CreateUserUseCase {
     return Set.copyOf(normalized);
   }
 
+  /**
+   * Enforces role-escalation rules for administrative creation.
+   *
+   * <p>The current policy allows creating USER and ADMIN accounts only, and ADMIN creation requires
+   * a SUPERADMIN actor in the current-user port.
+   */
   private void validateRolePermissions(Set<String> requestedRoles) {
     if (!ALLOWED_TARGET_ROLES.containsAll(requestedRoles)) {
       throw new ForbiddenOperationException(

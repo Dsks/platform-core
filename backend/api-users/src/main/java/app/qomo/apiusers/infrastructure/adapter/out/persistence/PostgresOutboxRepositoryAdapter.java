@@ -10,16 +10,37 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+/**
+ * Outbound adapter for {@link OutboxRepositoryPort} backed by the PostgreSQL {@code
+ * auth_outbox_events} table.
+ *
+ * <p>It implements the persistence side of the transactional outbox contract for application
+ * services and publishing jobs: events are inserted as {@code PENDING}, claimed as {@code
+ * IN_PROGRESS}, and then marked {@code SENT}, {@code FAILED}, or {@code DEAD}. Its side effects are
+ * SQL inserts and status updates on the outbox table; actual broker publication is handled by the
+ * outbox publisher port.
+ */
 public class PostgresOutboxRepositoryAdapter implements OutboxRepositoryPort {
 
   private static final int LAST_ERROR_MAX_LENGTH = 2048;
 
   private final JdbcTemplate jdbcTemplate;
 
+  /**
+   * Creates the repository adapter using Spring's JDBC abstraction.
+   *
+   * @param jdbcTemplate JDBC client used for PostgreSQL reads and writes
+   */
   public PostgresOutboxRepositoryAdapter(JdbcTemplate jdbcTemplate) {
     this.jdbcTemplate = jdbcTemplate;
   }
 
+  /**
+   * Inserts a new outbox record in {@code PENDING} status.
+   *
+   * @param event domain outbox event carrying aggregate metadata, target topic, key, payload JSON,
+   *     and creation timestamps
+   */
   @Override
   public void insertPending(OutboxEvent event) {
     jdbcTemplate.update(
@@ -41,6 +62,19 @@ public class PostgresOutboxRepositoryAdapter implements OutboxRepositoryPort {
         Timestamp.from(event.updatedAt()));
   }
 
+  /**
+   * Atomically claims a batch of publishable outbox events.
+   *
+   * <p>The query selects {@code PENDING} and {@code FAILED} rows older than the supplied threshold,
+   * orders them by creation time, and uses {@code FOR UPDATE SKIP LOCKED} so concurrent workers can
+   * claim different rows without blocking each other. Claimed rows are moved to {@code IN_PROGRESS}
+   * and returned to the caller for publication.
+   *
+   * @param batchSize maximum number of rows to claim
+   * @param olderThan only rows with {@code updated_at} before this instant are eligible
+   * @param now timestamp written as the claim update time
+   * @return claimed events ordered by their original creation time
+   */
   @Override
   public List<OutboxEvent> claimPublishable(int batchSize, Instant olderThan, Instant now) {
     return jdbcTemplate.query(
@@ -76,6 +110,15 @@ public class PostgresOutboxRepositoryAdapter implements OutboxRepositoryPort {
         Timestamp.from(now));
   }
 
+  /**
+   * Marks a claimed event as sent.
+   *
+   * <p>The update is guarded by {@code status = 'IN_PROGRESS'} so stale workers do not overwrite
+   * rows that are no longer owned by the current publication attempt.
+   *
+   * @param id outbox event identifier
+   * @param now timestamp written to {@code updated_at} and {@code sent_at}
+   */
   @Override
   public void markSent(UUID id, Instant now) {
     jdbcTemplate.update(
@@ -93,6 +136,14 @@ public class PostgresOutboxRepositoryAdapter implements OutboxRepositoryPort {
         id);
   }
 
+  /**
+   * Marks a claimed event as failed and increments its attempt counter.
+   *
+   * @param id outbox event identifier
+   * @param error recoverable publication error to persist after whitespace compaction and length
+   *     limiting
+   * @param now timestamp written to {@code updated_at}
+   */
   @Override
   public void markFailed(UUID id, String error, Instant now) {
     jdbcTemplate.update(
@@ -110,6 +161,14 @@ public class PostgresOutboxRepositoryAdapter implements OutboxRepositoryPort {
         id);
   }
 
+  /**
+   * Marks a claimed event as dead and increments its attempt counter.
+   *
+   * @param id outbox event identifier
+   * @param error terminal publication error to persist after whitespace compaction and length
+   *     limiting
+   * @param now timestamp written to {@code updated_at}
+   */
   @Override
   public void markDead(UUID id, String error, Instant now) {
     jdbcTemplate.update(
@@ -127,6 +186,12 @@ public class PostgresOutboxRepositoryAdapter implements OutboxRepositoryPort {
         id);
   }
 
+  /**
+   * Maps a claimed PostgreSQL row to the domain outbox model used by the publisher.
+   *
+   * <p>Status, {@code sent_at}, and {@code last_error} are intentionally not part of the returned
+   * domain object because claimed rows are always handed off as work items for publication.
+   */
   private OutboxEvent map(ResultSet rs) throws SQLException {
     return new OutboxEvent(
         rs.getObject("id", UUID.class),
@@ -141,6 +206,10 @@ public class PostgresOutboxRepositoryAdapter implements OutboxRepositoryPort {
         rs.getTimestamp("updated_at").toInstant());
   }
 
+  /**
+   * Normalizes stored error diagnostics so the outbox table does not keep oversized stack traces or
+   * multi-line broker errors.
+   */
   private String sanitizeError(String error) {
     if (error == null) {
       return null;

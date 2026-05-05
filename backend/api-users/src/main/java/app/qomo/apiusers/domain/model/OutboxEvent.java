@@ -4,6 +4,12 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * Domain representation of an event pending publication through the outbox pattern.
+ *
+ * <p>Stores immutable event identity plus operational metadata used by dispatchers (attempt count
+ * and timestamps).
+ */
 public record OutboxEvent(
     UUID id,
     String aggregateType,
@@ -16,6 +22,7 @@ public record OutboxEvent(
     Instant createdAt,
     Instant updatedAt) {
 
+  /** Creates an outbox event with mandatory routing and payload information. */
   public OutboxEvent {
     Objects.requireNonNull(id, "id cannot be null");
     Objects.requireNonNull(aggregateType, "aggregateType cannot be null");

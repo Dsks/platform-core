@@ -3,6 +3,7 @@ package app.qomo.apiusers.domain.constant;
 import app.qomo.apiusers.domain.model.RoleId;
 import java.util.UUID;
 
+/** Stable identifiers for built-in system roles used across the users domain. */
 public final class SystemRoleIds {
 
   private SystemRoleIds() {}

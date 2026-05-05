@@ -5,10 +5,19 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * Domain model for one-time verification tokens linked to user security flows.
+ *
+ * <p>Instances capture lifecycle timestamps and attempt metadata used to enforce expiration and
+ * abuse controls in upper layers.
+ */
 public class VerificationToken {
 
+  /** Functional token purpose within the user lifecycle. */
   public enum Type {
+    /** Used to confirm ownership of the email and transition users into verified state. */
     EMAIL_VERIFICATION,
+    /** Used to authorize password reset operations. */
     PASS_RESET
   }
 
@@ -24,6 +33,7 @@ public class VerificationToken {
   private final Instant lastAttemptAt;
   private final Instant lastSentAt;
 
+  /** Rehydrates a verification token from persistence. */
   public VerificationToken(
       VerificationTokenId id,
       UserId userId,
@@ -49,6 +59,12 @@ public class VerificationToken {
     this.lastSentAt = lastSentAt;
   }
 
+  /**
+   * Creates a new email verification OTP token.
+   *
+   * <p>The token starts with zero attempts, no consumption timestamp, and an expiration derived
+   * from {@code now + ttl}.
+   */
   public static VerificationToken emailVerificationOtp(
       UserId userId, String otpHash, UUID sessionId, Instant now, Duration ttl) {
     Objects.requireNonNull(now, "now cannot be null");
@@ -68,6 +84,7 @@ public class VerificationToken {
         now);
   }
 
+  /** Returns whether the token can no longer be used at the provided instant. */
   public boolean isExpired(Instant now) {
     return now.isAfter(expiresAt);
   }

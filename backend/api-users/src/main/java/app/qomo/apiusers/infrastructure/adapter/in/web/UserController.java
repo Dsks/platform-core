@@ -19,6 +19,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * HTTP boundary for user creation and user lookup under {@code /v1/users}.
+ *
+ * <p>The controller delegates writes to {@link CreateUserUseCase} and reads to {@link
+ * GetUserUseCase}. It does not issue or consume authentication cookies itself; validation and
+ * application exceptions are translated by {@link ApiExceptionHandler}.
+ */
 @RestController
 @RequestMapping("/v1/users")
 @Validated
@@ -35,6 +42,18 @@ public class UserController {
     this.getUser = getUser;
   }
 
+  /**
+   * Accepts a user-creation request and delegates account creation to the application layer.
+   *
+   * <p>The endpoint expects a JSON body with email, password, and caller-supplied role names, then
+   * returns {@code 202 Accepted} with a generic acknowledgement after the create command returns
+   * successfully. The generated request id is not a user id. Existing-email conflicts, validation
+   * failures, and malformed JSON are delegated to the global exception handler. No cookies are read
+   * or written.
+   *
+   * @param request validated user-creation body
+   * @return generic accepted response after the create command succeeds
+   */
   @PostMapping
   public ResponseEntity<?> create(@Valid @RequestBody CreateUserRequest request) {
 
@@ -49,6 +68,17 @@ public class UserController {
     return ResponseEntity.accepted().body(body);
   }
 
+  /**
+   * Reads a user representation by UUID path segment.
+   *
+   * <p>The path variable is validated at the HTTP edge before conversion to {@link UserId}. A found
+   * user returns {@code 200 OK} with {@link UserResponse}; an absent user returns {@code 404 Not
+   * Found}; an invalid UUID format is handled as a {@code 400 Bad Request} validation error by
+   * {@link ApiExceptionHandler}. No cookies are read or written.
+   *
+   * @param id UUID string identifying the user resource
+   * @return user representation or an empty not-found response
+   */
   @GetMapping("/{id}")
   public ResponseEntity<UserResponse> getById(
       @PathVariable @Pattern(regexp = UUID_PATTERN, message = "must be a valid UUID") String id) {

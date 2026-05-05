@@ -14,6 +14,19 @@ import java.util.Objects;
 import java.util.UUID;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Orchestrates public account registration and the first email-verification challenge.
+ *
+ * <p>The service coordinates user and role repositories, password hashing, the application clock,
+ * and email-verification issuance. It protects the registration invariants that emails are
+ * canonicalized before lookup, new accounts start with the configured default role, and plaintext
+ * passwords are converted to hashes before a user is persisted.
+ *
+ * <p>Registration intentionally avoids confirming whether a verified account already exists: an
+ * existing verified email receives an accepted result without a verification session. Existing
+ * unverified users are routed back into verification issuance. Raw passwords, OTPs, verification
+ * sessions, and other secrets must not be logged in clear text by callers or adapters.
+ */
 public class RegisterUserService implements RegisterUserUseCase {
 
   private static final String DEFAULT_ROLE = "USER";
@@ -40,6 +53,22 @@ public class RegisterUserService implements RegisterUserUseCase {
             issueEmailVerificationService, "issueEmailVerificationService cannot be null");
   }
 
+  /**
+   * Accepts a registration request and starts email verification when the application can act on
+   * the email.
+   *
+   * <p>For a new email, the method creates an active but unverified user, hashes the supplied
+   * password, assigns the default role, persists the aggregate, and issues an email-verification
+   * OTP. For an existing unverified user, it issues or rate-limits a new verification challenge
+   * without changing the password. For an existing verified user, it returns an accepted result
+   * without a session so the caller can preserve anti-enumeration behavior.
+   *
+   * @param command registration data containing email and plaintext password material
+   * @return a request correlation id and, when issued, the verification session id and TTL
+   * @throws InvalidCommandException when the command, email, or password is missing, when the
+   *     password is blank, or when the email is structurally invalid
+   * @throws RoleNotFoundException when the configured default role cannot be resolved
+   */
   @Override
   @Transactional
   public Result register(Command command) {
