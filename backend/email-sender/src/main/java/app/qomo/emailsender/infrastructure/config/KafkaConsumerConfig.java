@@ -13,15 +13,37 @@ import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
 
+/**
+ * Defines the Kafka consumer infrastructure used by email-sender listeners.
+ *
+ * <p>The class centralizes JSON mapping and listener container construction for messages consumed
+ * by the module. It reads operational Kafka settings from Spring configuration, including bootstrap
+ * servers, group identity, offset reset behavior, auto-commit, and listener startup. Message
+ * handling and email business decisions should remain in listener/application components, not in
+ * this infrastructure wiring.
+ */
 @Configuration
 @EnableKafka
 public class KafkaConsumerConfig {
 
+  /**
+   * Provides the JSON mapper shared by Kafka payload handling and retry flows.
+   *
+   * <p>Registered Jackson modules allow Java time and other discovered platform types to be
+   * serialized consistently without each adapter creating its own mapper.
+   */
   @Bean
   public ObjectMapper objectMapper() {
     return new ObjectMapper().findAndRegisterModules();
   }
 
+  /**
+   * Builds the string-based Kafka consumer factory for inbound email messages.
+   *
+   * <p>The consumer configuration is resolved from the Spring environment with local defaults for
+   * runtime operation. Serialization is intentionally kept at string boundaries so downstream
+   * listeners can decide how to parse and validate each payload.
+   */
   @Bean
   public ConsumerFactory<String, String> consumerFactory(
       org.springframework.core.env.Environment environment) {
@@ -44,6 +66,13 @@ public class KafkaConsumerConfig {
     return new DefaultKafkaConsumerFactory<>(props);
   }
 
+  /**
+   * Creates the listener container factory used by {@code @KafkaListener} methods in this module.
+   *
+   * <p>The factory uses the module consumer factory, manual acknowledgement, and an externally
+   * controlled auto-startup flag. Those runtime decisions define listener behavior without changing
+   * topic names, group IDs, or message processing logic here.
+   */
   @Bean(name = "kafkaListenerContainerFactory")
   public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory(
       ConsumerFactory<String, String> consumerFactory,

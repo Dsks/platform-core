@@ -22,6 +22,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Issues email-verification challenges for registration, resend, and valid-but-unverified login
+ * paths.
+ *
+ * <p>This service owns the write side of verification issuance: it enforces the minimum resend
+ * interval, invalidates older active email-verification tokens before creating a new one, stores
+ * only the hashed OTP, and publishes the email command through the outbox port. Callers choose the
+ * business reason and correlation id so the same issuance policy can be reused by registration,
+ * resend, and valid-but-unverified login flows.
+ *
+ * <p>Issuing is different from resending and verifying: resend decides whether an external retry
+ * request should be allowed to reach issuance, while verification validates a submitted session and
+ * code. The generated OTP and recipient email are sensitive; logs use fingerprints and must not
+ * expose codes, verification sessions, tokens, or secrets in clear text.
+ */
 public class IssueEmailVerificationService {
 
   private static final Logger log = LoggerFactory.getLogger(IssueEmailVerificationService.class);
@@ -63,6 +78,23 @@ public class IssueEmailVerificationService {
         Objects.requireNonNull(emailCommandsTopic, "emailCommandsTopic cannot be null");
   }
 
+  /**
+   * Creates a new email-verification OTP and queues the corresponding email command unless the
+   * latest active token is still inside the configured resend interval.
+   *
+   * <p>When rate-limited, the method returns a non-issued result without invalidating tokens or
+   * publishing an outbox event. When issued, it invalidates previous active email-verification
+   * tokens, generates and hashes a six-digit OTP, persists the new token with a verification
+   * session id, and inserts a pending outbox event containing the email command payload.
+   *
+   * @param userId target user that must prove ownership of the email address
+   * @param email canonical recipient email for the verification challenge
+   * @param reason sanitized operational reason used for audit logs and diagnostics
+   * @param correlationId caller-supplied correlation id propagated into the outbox payload
+   * @return issuance metadata including the verification session when a challenge was sent, the
+   *     configured TTL, and a flag indicating whether issuance occurred
+   * @throws IllegalStateException when the email command payload cannot be serialized
+   */
   @Transactional
   public IssueResult issue(UserId userId, Email email, String reason, String correlationId) {
     var now = clock.now();
@@ -124,6 +156,13 @@ public class IssueEmailVerificationService {
     return new IssueResult(verificationSessionId, emailOtpTtl.toSeconds(), true);
   }
 
+  /**
+   * Serializes the outbox payload that downstream email delivery needs.
+   *
+   * <p>The verification code is intentionally present in this command payload so the email service
+   * can deliver it to the user, but it must be treated as secret material by every outbox consumer
+   * and logging path.
+   */
   private String payloadJson(EmailVerificationRequestedCommand command) {
     Map<String, Object> payload = new LinkedHashMap<>();
     payload.put("eventId", command.eventId());
@@ -141,5 +180,13 @@ public class IssueEmailVerificationService {
     }
   }
 
+  /**
+   * Captures the outcome of an email-verification issuance attempt.
+   *
+   * @param verificationSessionId session identifier to give back to the adapter when a new
+   *     challenge was issued; {@code null} when issuance was rate-limited
+   * @param ttlSeconds configured validity window for the verification challenge, in seconds
+   * @param issued {@code true} when a new token and outbox event were created
+   */
   public record IssueResult(UUID verificationSessionId, long ttlSeconds, boolean issued) {}
 }

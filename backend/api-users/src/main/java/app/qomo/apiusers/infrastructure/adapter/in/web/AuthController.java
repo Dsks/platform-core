@@ -24,6 +24,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * HTTP boundary for browser authentication and public registration under {@code /v1/auth}.
+ *
+ * <p>The controller delegates credential and registration decisions to {@link LoginUseCase} and
+ * {@link RegisterUserUseCase}; it only translates application results into HTTP responses and
+ * browser cookies. Successful login issues the JWT as an HttpOnly cookie, while registration or an
+ * unverified login can issue a separate verification-session cookie. Registration responses remain
+ * generic so clients cannot use this boundary to confirm whether an email already belongs to an
+ * account.
+ */
 @RestController
 @RequestMapping("/v1/auth")
 public class AuthController {
@@ -67,6 +77,22 @@ public class AuthController {
     this.verificationCookieSameSite = verificationCookieSameSite;
   }
 
+  /**
+   * Authenticates a browser session from an email/password request body.
+   *
+   * <p>On success, returns {@code 204 No Content} and writes {@value #AUTH_COOKIE_NAME} as an
+   * HttpOnly cookie containing the generated JWT. The cookie is scoped to {@code /}, uses the
+   * configured Secure and SameSite policies, and receives the configured JWT max-age. When
+   * credentials belong to an unverified user, the endpoint returns {@code 403 Forbidden} with an
+   * {@code EMAIL_NOT_VERIFIED} problem response and, when the application provides a verification
+   * session, writes the verification cookie so the client can continue the email-verification flow.
+   * Invalid credentials, inactive users, malformed JSON, and validation failures are surfaced by
+   * the global exception handler.
+   *
+   * @param request validated login credentials from the JSON request body
+   * @return a no-content response with the auth cookie, or a problem response for an unverified
+   *     account
+   */
   @PostMapping("/login")
   public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
     var result = loginUseCase.login(new LoginUseCase.Command(request.email(), request.password()));
@@ -102,6 +128,21 @@ public class AuthController {
     return ResponseEntity.noContent().header(HttpHeaders.SET_COOKIE, cookie.toString()).build();
   }
 
+  /**
+   * Accepts a public registration request without exposing account-existence details.
+   *
+   * <p>The endpoint delegates account creation and verification-session creation to {@link
+   * RegisterUserUseCase}. It returns {@code 202 Accepted} with a generic {@link
+   * RegistrationAcceptedResponse}; if the application created a verification session, the response
+   * also writes the verification cookie. That cookie is HttpOnly, scoped to {@code /}, uses the
+   * configured Secure and SameSite policies, and expires with the application-provided session TTL.
+   * Duplicate-email handling is delegated to {@link ApiExceptionHandler}, which preserves the same
+   * generic response shape for this public route. Validation and malformed-body errors are handled
+   * globally.
+   *
+   * @param request validated email and password from the JSON request body
+   * @return a generic accepted response, optionally with a verification-session cookie
+   */
   @PostMapping("/register")
   public ResponseEntity<RegistrationAcceptedResponse> register(
       @Valid @RequestBody RegisterRequest request) {
@@ -126,6 +167,16 @@ public class AuthController {
     return ResponseEntity.accepted().header(HttpHeaders.SET_COOKIE, cookie.toString()).body(body);
   }
 
+  /**
+   * Returns the CSRF token material expected by Spring Security for subsequent state-changing
+   * calls.
+   *
+   * <p>The response is {@code 200 OK} with the header name, parameter name, and token value
+   * supplied by the framework. This method does not manually read or write cookies.
+   *
+   * @param csrfToken framework-provided token for the current request
+   * @return token metadata and value for the client
+   */
   @GetMapping("/csrf")
   public ResponseEntity<Map<String, String>> csrf(CsrfToken csrfToken) {
     return ResponseEntity.ok(
@@ -135,6 +186,14 @@ public class AuthController {
             "token", csrfToken.getToken()));
   }
 
+  /**
+   * Builds cookies that carry browser security state without exposing values to client-side
+   * scripts.
+   *
+   * <p>All cookies created here are HttpOnly, scoped to {@code /}, use the configured Secure and
+   * SameSite policy, and receive the caller-provided max-age so login and verification sessions can
+   * expire independently.
+   */
   private ResponseCookie buildHttpOnlyCookie(
       String name, String value, boolean secure, String sameSitePolicy, Duration maxAge) {
     return ResponseCookie.from(name, value)

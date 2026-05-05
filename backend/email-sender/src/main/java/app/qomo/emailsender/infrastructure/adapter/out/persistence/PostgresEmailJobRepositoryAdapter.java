@@ -12,6 +12,17 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SqlParameterValue;
 import org.springframework.stereotype.Repository;
 
+/**
+ * {@link EmailJobRepositoryPort} implementation backed by the PostgreSQL {@code email_jobs} table.
+ *
+ * <p>This adapter encapsulates JDBC access, SQL shape, persisted status values, timestamp columns,
+ * encrypted payload storage, recipient fingerprint storage, and PostgreSQL row-claiming semantics.
+ * The application layer sees only durable job creation, lifecycle transitions, and retry claims.
+ *
+ * <p>Writes performed here are the durable side effects of the email workflow. Idempotent creation
+ * relies on the database enforcing uniqueness for the inserted job key; this adapter interprets a
+ * duplicate-key failure during insert as an already persisted job.
+ */
 @Repository
 public class PostgresEmailJobRepositoryAdapter implements EmailJobRepositoryPort {
 
@@ -21,6 +32,17 @@ public class PostgresEmailJobRepositoryAdapter implements EmailJobRepositoryPort
     this.jdbcTemplate = jdbcTemplate;
   }
 
+  /**
+   * Inserts a new {@code PENDING} row with zero attempts and encrypted payload material.
+   *
+   * <p>The raw recipient and payload are expected to have been transformed before this boundary is
+   * called: only {@code toEmailFp}, ciphertext, and nonce are stored. Any {@link
+   * DuplicateKeyException} raised by the insert is treated as evidence that the event was already
+   * represented in {@code email_jobs}; no existing row is updated in that case.
+   *
+   * @return {@code true} when the row was inserted, {@code false} when the insert hit a duplicate
+   *     key
+   */
   @Override
   public boolean tryCreatePending(
       UUID eventId,
@@ -58,6 +80,13 @@ public class PostgresEmailJobRepositoryAdapter implements EmailJobRepositoryPort
     }
   }
 
+  /**
+   * Persists the successful delivery transition for the job identified by {@code eventId}.
+   *
+   * <p>The update sets {@code status}, {@code sent_at}, and {@code updated_at}. It is keyed only by
+   * {@code event_id}, so this adapter does not enforce a previous status or report whether a row
+   * was matched.
+   */
   @Override
   public void markSent(UUID eventId, Instant now) {
 
@@ -70,6 +99,13 @@ public class PostgresEmailJobRepositoryAdapter implements EmailJobRepositoryPort
         eventId);
   }
 
+  /**
+   * Records a failed processing attempt and leaves the job eligible for later retry decisions.
+   *
+   * <p>The update moves the row to {@code FAILED}, increments {@code attempts}, stores the supplied
+   * diagnostic text, and refreshes {@code updated_at}. It does not validate the current status or
+   * expose the affected-row count to the application layer.
+   */
   @Override
   public void markFailed(UUID eventId, String error, Instant now) {
 
@@ -86,6 +122,19 @@ public class PostgresEmailJobRepositoryAdapter implements EmailJobRepositoryPort
         eventId);
   }
 
+  /**
+   * Atomically claims retryable jobs from {@code email_jobs} for the current processing pass.
+   *
+   * <p>Candidates are {@code FAILED} or still-{@code PENDING} rows with attempts below {@code
+   * maxAttempts} and an {@code updated_at} timestamp older than {@code olderThan}. PostgreSQL
+   * {@code FOR UPDATE SKIP LOCKED} lets concurrent workers skip rows already claimed by another
+   * transaction, and the oldest candidates are preferred first. The claim itself only refreshes
+   * {@code updated_at}; delivery state and attempt counters are changed by the later lifecycle
+   * methods.
+   *
+   * @return claimed jobs in retry order, or an empty list when no row currently satisfies the
+   *     criteria
+   */
   @Override
   public List<EmailJobRecord> claimRetryCandidates(
       int maxAttempts, Instant olderThan, int limit, Instant now) {
@@ -130,6 +179,13 @@ public class PostgresEmailJobRepositoryAdapter implements EmailJobRepositoryPort
         Timestamp.from(now));
   }
 
+  /**
+   * Persists the terminal failure transition for a job that should no longer be retried.
+   *
+   * <p>The row is moved to {@code DEAD}, {@code attempts} is incremented for the final failed pass,
+   * and the supplied error is stored as the last failure. As with the other state transitions, this
+   * update is keyed by {@code event_id} without checking the previous status.
+   */
   @Override
   public void markDead(UUID eventId, String error, Instant now) {
     jdbcTemplate.update(

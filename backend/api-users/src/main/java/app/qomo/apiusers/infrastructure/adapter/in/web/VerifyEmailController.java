@@ -20,6 +20,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * HTTP boundary for email-verification completion and resend flows under {@code /v1/users}.
+ *
+ * <p>The browser verification session is carried in a dedicated HttpOnly cookie rather than in the
+ * request body. The controller delegates verification decisions to {@link VerifyEmailUseCase} and
+ * resend requests to {@link ResendEmailVerificationUseCase}. Responses for missing, malformed, or
+ * unusable verification state are intentionally generic to avoid account or token enumeration.
+ * Successful verification clears the cookie; resend can replace it with a fresh session.
+ */
 @RestController
 @RequestMapping("/v1/users")
 public class VerifyEmailController {
@@ -48,6 +57,21 @@ public class VerifyEmailController {
     this.verificationCookieSameSite = verificationCookieSameSite;
   }
 
+  /**
+   * Attempts to complete email verification using the code in the body and the session id cookie.
+   *
+   * <p>The endpoint expects {@link VerifyEmailRequest}; the verification session id is read from
+   * the configured cookie. Missing cookies, non-UUID cookie values, invalid codes, and
+   * application-level rejections all return {@code 202 Accepted} with the same generic body. A
+   * successful verification returns {@code 204 No Content} and clears the verification cookie by
+   * setting an empty HttpOnly cookie on path {@code /} with the configured Secure and SameSite
+   * policies and {@code Max-Age=0}. Validation and malformed-body errors are delegated to the
+   * global exception handler.
+   *
+   * @param servletRequest request used only to read the verification-session cookie
+   * @param request validated verification code from the JSON request body
+   * @return generic accepted response for non-successful attempts, or no content after success
+   */
   @PostMapping("/verify-email")
   public ResponseEntity<?> verifyEmail(
       HttpServletRequest servletRequest, @Valid @RequestBody VerifyEmailRequest request) {
@@ -83,6 +107,20 @@ public class VerifyEmailController {
         .build();
   }
 
+  /**
+   * Requests another verification code without exposing whether the email maps to a verifiable
+   * user.
+   *
+   * <p>The endpoint expects an email body and delegates the decision to {@link
+   * ResendEmailVerificationUseCase}. It always returns {@code 202 Accepted} with the same generic
+   * message when the request is syntactically valid. When the application creates a new
+   * verification session, the response writes or replaces the verification cookie as HttpOnly,
+   * scoped to {@code /}, using the configured Secure and SameSite policies and the
+   * application-provided session TTL. Validation and malformed-body errors are handled globally.
+   *
+   * @param request validated email address from the JSON request body
+   * @return generic accepted response, optionally with a refreshed verification-session cookie
+   */
   @PostMapping("/verification/resend")
   public ResponseEntity<?> resendVerification(
       @Valid @RequestBody ResendVerificationRequest request) {
@@ -107,6 +145,10 @@ public class VerifyEmailController {
         .body(GENERIC_RESPONSE_RESEND);
   }
 
+  /**
+   * Reads a cookie by exact name and returns {@code null} for absent cookie arrays so callers can
+   * keep privacy-preserving response shapes.
+   */
   private String readCookie(HttpServletRequest request, String name) {
     Cookie[] cookies = request.getCookies();
     if (cookies == null) {

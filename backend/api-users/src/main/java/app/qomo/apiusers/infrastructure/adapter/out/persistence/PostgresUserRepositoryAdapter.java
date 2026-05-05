@@ -18,6 +18,14 @@ import java.util.stream.Collectors;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Outbound adapter for {@link UserRepositoryPort} backed by PostgreSQL authentication tables.
+ *
+ * <p>The adapter persists the {@link User} aggregate in {@code auth_users} and its role membership
+ * in {@code auth_users_roles}, joining {@code auth_roles} when restoring the aggregate. It
+ * encapsulates SQL upserts, role join-table replacement, nullable login timestamps, and required
+ * creation/update timestamps for the application layer.
+ */
 public class PostgresUserRepositoryAdapter implements UserRepositoryPort {
 
   private static final String SQL_EXISTS_BY_EMAIL =
@@ -63,26 +71,64 @@ public class PostgresUserRepositoryAdapter implements UserRepositoryPort {
 
   private final JdbcTemplate jdbcTemplate;
 
+  /**
+   * Creates the repository adapter using Spring's JDBC abstraction.
+   *
+   * @param jdbcTemplate JDBC client used for PostgreSQL user and role mapping operations
+   * @throws NullPointerException if {@code jdbcTemplate} is {@code null}
+   */
   public PostgresUserRepositoryAdapter(JdbcTemplate jdbcTemplate) {
     this.jdbcTemplate = Objects.requireNonNull(jdbcTemplate, "jdbcTemplate cannot be null");
   }
 
+  /**
+   * Checks whether an email already exists in {@code auth_users}.
+   *
+   * <p>The query selects a single sentinel row with {@code LIMIT 1}; it does not restore the user
+   * aggregate or inspect role membership.
+   *
+   * @param email email value to compare with the stored canonical email column
+   * @return {@code true} when at least one user row exists for the email
+   */
   @Override
   public boolean existsByEmail(String email) {
     Integer exists = jdbcTemplate.query(SQL_EXISTS_BY_EMAIL, rs -> rs.next() ? 1 : null, email);
     return exists != null;
   }
 
+  /**
+   * Restores a user aggregate by identifier.
+   *
+   * @param id domain user identifier mapped to {@code auth_users.id}
+   * @return restored user with roles, or {@link Optional#empty()} when no user row exists
+   */
   @Override
   public Optional<User> findById(UserId id) {
     return findUser(SQL_FIND_USER_BY_ID, id.value());
   }
 
+  /**
+   * Restores a user aggregate by email.
+   *
+   * @param email email value mapped to {@code auth_users.email}
+   * @return restored user with roles, or {@link Optional#empty()} when no user row exists
+   */
   @Override
   public Optional<User> findByEmail(String email) {
     return findUser(SQL_FIND_USER_BY_EMAIL, email);
   }
 
+  /**
+   * Upserts the user row and replaces its role join rows in one transaction.
+   *
+   * <p>The user row is keyed by {@code id}; when it already exists, all persisted scalar fields are
+   * overwritten with the aggregate state supplied by the application layer. Role membership is
+   * rewritten by deleting current join rows and inserting the distinct role identifiers from the
+   * aggregate, keeping the database representation aligned with the in-memory aggregate snapshot.
+   *
+   * @param user aggregate snapshot to persist, including roles and timestamps
+   * @return the same aggregate instance supplied by the caller
+   */
   @Override
   @Transactional
   public User save(User user) {
@@ -107,11 +153,23 @@ public class PostgresUserRepositoryAdapter implements UserRepositoryPort {
     return user;
   }
 
+  /**
+   * Marks a user row as verified.
+   *
+   * @param id domain user identifier mapped to {@code auth_users.id}
+   * @param now timestamp written to {@code updated_at}
+   */
   @Override
   public void setVerified(UserId id, Instant now) {
     jdbcTemplate.update(SQL_SET_VERIFIED, Timestamp.from(now), id.value());
   }
 
+  /**
+   * Restores the user row and then loads role membership through the join table.
+   *
+   * <p>{@code last_login} is mapped as nullable, while {@code created_at} and {@code updated_at}
+   * are treated as required database values before calling the domain restore factory.
+   */
   private Optional<User> findUser(String sql, Object idOrEmail) {
     Optional<UserRow> userRow =
         jdbcTemplate
@@ -158,14 +216,22 @@ public class PostgresUserRepositoryAdapter implements UserRepositoryPort {
     return Optional.of(user);
   }
 
+  /**
+   * Converts nullable domain instants to JDBC timestamps for optional columns such as login time.
+   */
   private Timestamp toTimestamp(Instant value) {
     return value == null ? null : Timestamp.from(value);
   }
 
+  /** Converts nullable JDBC timestamps to domain instants without inventing default values. */
   private Instant toInstant(Timestamp value) {
     return value == null ? null : value.toInstant();
   }
 
+  /**
+   * Internal row DTO for scalar user columns before role rows are loaded and the domain aggregate
+   * is restored.
+   */
   private record UserRow(
       UserId id,
       String email,
