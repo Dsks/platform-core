@@ -1,3 +1,6 @@
 rootProject.name = "api-users"
 
-includeBuild("../email-sender")
+val emailSenderDir = file("../email-sender")
+if (emailSenderDir.isDirectory) {
+    includeBuild(emailSenderDir)
+}

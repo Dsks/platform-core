@@ -10,6 +10,8 @@ group = "app.qomo"
 version = "0.0.1-SNAPSHOT"
 description = "Qomo Platform"
 
+val emailSenderDir = file("../email-sender")
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
