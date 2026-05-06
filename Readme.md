@@ -1,6 +1,6 @@
 # Platform Core
 
-Repositorio monorepo de con arquitectura de microservicios.
+Repositorio monorepo con arquitectura de microservicios.
 
 ---
 
@@ -76,7 +76,6 @@ Para evitar problemas con rutas y variables de entorno, **siempre se usa `--env-
 ---
 
 ### 3) Infra + core + gateway  
-(si estás trabajando solo recetas / menús)
 
     docker compose --env-file .\.env -f .\docker\compose\docker-compose.local.yml --profile infra --profile core --profile gateway up -d --build
 
