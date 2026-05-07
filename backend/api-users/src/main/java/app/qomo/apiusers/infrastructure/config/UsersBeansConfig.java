@@ -1,6 +1,7 @@
 package app.qomo.apiusers.infrastructure.config;
 
 import app.qomo.apiusers.application.port.in.CreateUserUseCase;
+import app.qomo.apiusers.application.port.in.GetCurrentUserUseCase;
 import app.qomo.apiusers.application.port.in.GetUserUseCase;
 import app.qomo.apiusers.application.port.in.LoginUseCase;
 import app.qomo.apiusers.application.port.in.RegisterUserUseCase;
@@ -18,6 +19,7 @@ import app.qomo.apiusers.application.port.out.UserEventPublisherPort;
 import app.qomo.apiusers.application.port.out.UserRepositoryPort;
 import app.qomo.apiusers.application.port.out.VerificationTokenRepositoryPort;
 import app.qomo.apiusers.application.service.CreateUserService;
+import app.qomo.apiusers.application.service.GetCurrentUserService;
 import app.qomo.apiusers.application.service.GetUserService;
 import app.qomo.apiusers.application.service.IssueEmailVerificationService;
 import app.qomo.apiusers.application.service.LoginService;
@@ -340,6 +342,18 @@ public class UsersBeansConfig {
   @Bean
   public GetUserUseCase getUserUseCase(UserRepositoryPort userRepository) {
     return new GetUserService(userRepository);
+  }
+
+  /**
+   * Assembles the current-user read use case with the security-context and user repository ports.
+   *
+   * @param currentUserPort security-context adapter used to identify the authenticated principal
+   * @param userRepository user persistence port queried for current account state
+   */
+  @Bean
+  public GetCurrentUserUseCase getCurrentUserUseCase(
+      CurrentUserPort currentUserPort, UserRepositoryPort userRepository) {
+    return new GetCurrentUserService(currentUserPort, userRepository);
   }
 
   /**

@@ -1,9 +1,11 @@
 package app.qomo.apiusers.infrastructure.adapter.in.web;
 
+import app.qomo.apiusers.application.port.in.GetCurrentUserUseCase;
 import app.qomo.apiusers.application.port.in.LoginUseCase;
 import app.qomo.apiusers.application.port.in.RegisterUserUseCase;
 import app.qomo.apiusers.application.port.out.ClockPort;
 import app.qomo.apiusers.application.port.out.JwtTokenProviderPort;
+import app.qomo.apiusers.infrastructure.adapter.in.web.dto.CurrentUserResponse;
 import app.qomo.apiusers.infrastructure.adapter.in.web.dto.LoginRequest;
 import app.qomo.apiusers.infrastructure.adapter.in.web.dto.RegisterRequest;
 import app.qomo.apiusers.infrastructure.adapter.in.web.dto.RegistrationAcceptedResponse;
@@ -13,6 +15,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.net.URI;
@@ -43,7 +46,9 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/v1/auth")
-@Tag(name = "Auth", description = "Registration, login, and CSRF bootstrap endpoints.")
+@Tag(
+    name = "Auth",
+    description = "Registration, login, current user, and CSRF bootstrap endpoints.")
 public class AuthController {
 
   public static final String AUTH_COOKIE_NAME = "QOMO_AUTH";
@@ -52,6 +57,7 @@ public class AuthController {
 
   private final LoginUseCase loginUseCase;
   private final RegisterUserUseCase registerUserUseCase;
+  private final GetCurrentUserUseCase getCurrentUserUseCase;
   private final JwtTokenProviderPort jwtTokenProvider;
   private final ClockPort clock;
   private final long expirationMs;
@@ -64,6 +70,7 @@ public class AuthController {
   public AuthController(
       LoginUseCase loginUseCase,
       RegisterUserUseCase registerUserUseCase,
+      GetCurrentUserUseCase getCurrentUserUseCase,
       JwtTokenProviderPort jwtTokenProvider,
       ClockPort clock,
       @Value("${qomo.security.jwt.expiration-ms:86400000}") long expirationMs,
@@ -75,6 +82,7 @@ public class AuthController {
           String verificationCookieSameSite) {
     this.loginUseCase = loginUseCase;
     this.registerUserUseCase = registerUserUseCase;
+    this.getCurrentUserUseCase = getCurrentUserUseCase;
     this.jwtTokenProvider = jwtTokenProvider;
     this.clock = clock;
     this.expirationMs = expirationMs;
@@ -83,6 +91,63 @@ public class AuthController {
     this.verificationCookieName = verificationCookieName;
     this.verificationCookieSecure = verificationCookieSecure;
     this.verificationCookieSameSite = verificationCookieSameSite;
+  }
+
+  /**
+   * Returns the authenticated user's current identity.
+   *
+   * <p>The endpoint relies on the existing JWT cookie authentication filter to populate the
+   * principal, then delegates current account resolution to {@link GetCurrentUserUseCase}. It is a
+   * read-only endpoint, so Spring Security does not require a CSRF token. The response
+   * intentionally exposes only safe user identity and account-state fields needed by browser
+   * clients after login.
+   *
+   * @return current authenticated user representation
+   */
+  @Operation(
+      summary = "Get current authenticated user",
+      description =
+          "Returns the current authenticated user's safe identity projection using the QOMO_AUTH"
+              + " cookie. The response excludes JWTs, password hashes, verification codes, and"
+              + " internal token material.",
+      security = @SecurityRequirement(name = "qomoAuthCookie"))
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = "Current authenticated user.",
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = CurrentUserResponse.class))),
+    @ApiResponse(
+        responseCode = "401",
+        description = "Authentication requirements are not satisfied.",
+        content = @Content()),
+    @ApiResponse(
+        responseCode = "403",
+        description = "The authenticated account cannot access this endpoint in its current state.",
+        content =
+            @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class))),
+    @ApiResponse(
+        responseCode = "404",
+        description = "The authenticated user no longer exists.",
+        content =
+            @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class)))
+  })
+  @GetMapping("/me")
+  public ResponseEntity<CurrentUserResponse> me() {
+    var currentUser = getCurrentUserUseCase.getCurrentUser();
+    return ResponseEntity.ok(
+        new CurrentUserResponse(
+            currentUser.id(),
+            currentUser.email(),
+            currentUser.active(),
+            currentUser.emailVerified(),
+            currentUser.roles()));
   }
 
   /**

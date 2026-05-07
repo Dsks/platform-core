@@ -8,9 +8,11 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import app.qomo.apiusers.application.port.in.CreateUserUseCase;
+import app.qomo.apiusers.application.port.in.GetCurrentUserUseCase;
 import app.qomo.apiusers.application.port.in.GetUserUseCase;
 import app.qomo.apiusers.application.port.in.LoginUseCase;
 import app.qomo.apiusers.application.port.in.RegisterUserUseCase;
@@ -25,7 +27,11 @@ import app.qomo.apiusers.infrastructure.adapter.in.web.VerifyEmailController;
 import jakarta.servlet.http.Cookie;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.Set;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -41,6 +47,7 @@ class SecurityConfigJwtWebLayerTest {
 
   @MockitoBean private LoginUseCase loginUseCase;
   @MockitoBean private RegisterUserUseCase registerUserUseCase;
+  @MockitoBean private GetCurrentUserUseCase getCurrentUserUseCase;
   @MockitoBean private CreateUserUseCase createUserUseCase;
   @MockitoBean private GetUserUseCase getUserUseCase;
   @MockitoBean private VerifyEmailUseCase verifyEmailUseCase;
@@ -60,6 +67,65 @@ class SecurityConfigJwtWebLayerTest {
         .perform(get("/v1/users/2fa8b8e9-3090-404e-a6e8-d95dd8e3b0ec"))
         .andExpect(status().isForbidden());
     verify(getUserUseCase, never()).getById(any());
+  }
+
+  @Test
+  void currentUserRouteReturnsForbiddenWhenJwtCookieIsMissing() throws Exception {
+    mockMvc.perform(get("/v1/auth/me")).andExpect(status().isForbidden());
+
+    verify(getCurrentUserUseCase, never()).getCurrentUser();
+  }
+
+  @Test
+  void currentUserRouteAllowsAuthenticatedUserRoleWithoutCsrf() throws Exception {
+    when(clockPort.now()).thenReturn(Instant.parse("2026-03-26T10:15:30Z"));
+    when(jwtTokenProviderPort.validate(eq("current-user-jwt"), any(Instant.class)))
+        .thenReturn(true);
+    when(jwtTokenProviderPort.subject("current-user-jwt"))
+        .thenReturn("11111111-1111-4111-8111-111111111111");
+    when(jwtTokenProviderPort.roles("current-user-jwt")).thenReturn(Set.of("USER"));
+    when(getCurrentUserUseCase.getCurrentUser())
+        .thenReturn(
+            new GetCurrentUserUseCase.Result(
+                "11111111-1111-4111-8111-111111111111",
+                "current.user@example.com",
+                true,
+                true,
+                Set.of("USER")));
+
+    mockMvc
+        .perform(
+            get("/v1/auth/me")
+                .cookie(new Cookie(AuthController.AUTH_COOKIE_NAME, "current-user-jwt")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value("11111111-1111-4111-8111-111111111111"))
+        .andExpect(jsonPath("$.email").value("current.user@example.com"))
+        .andExpect(jsonPath("$.active").value(true))
+        .andExpect(jsonPath("$.emailVerified").value(true))
+        .andExpect(jsonPath("$.roles", Matchers.containsInAnyOrder("USER")));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"ADMIN", "SUPERADMIN"})
+  void currentUserRouteAllowsAdministrativeRolesWithoutCsrf(String role) throws Exception {
+    String token = role.toLowerCase(java.util.Locale.ROOT) + "-me-jwt";
+    when(clockPort.now()).thenReturn(Instant.parse("2026-03-26T10:15:30Z"));
+    when(jwtTokenProviderPort.validate(eq(token), any(Instant.class))).thenReturn(true);
+    when(jwtTokenProviderPort.subject(token)).thenReturn("22222222-2222-4222-8222-222222222222");
+    when(jwtTokenProviderPort.roles(token)).thenReturn(Set.of(role));
+    when(getCurrentUserUseCase.getCurrentUser())
+        .thenReturn(
+            new GetCurrentUserUseCase.Result(
+                "22222222-2222-4222-8222-222222222222",
+                "admin.user@example.com",
+                true,
+                true,
+                Set.of(role)));
+
+    mockMvc
+        .perform(get("/v1/auth/me").cookie(new Cookie(AuthController.AUTH_COOKIE_NAME, token)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.roles", Matchers.containsInAnyOrder(role)));
   }
 
   @Test

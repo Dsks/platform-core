@@ -82,10 +82,11 @@ public class SecurityConfig {
    * Builds the HTTP authorization chain for the users API.
    *
    * <p>Login, registration, CSRF token retrieval, email verification, verification resend, health
-   * checks, and OpenAPI/Swagger assets are public. User creation is limited to ADMIN and SUPERADMIN
-   * roles, other users routes require authentication, and every remaining route is protected by
-   * default. The JWT cookie filter runs before username/password authentication so the security
-   * context is populated from the signed cookie before authorization rules are evaluated.
+   * checks, and OpenAPI/Swagger assets are public. Current-user lookup is authenticated, user
+   * creation is limited to ADMIN and SUPERADMIN roles, other users routes require authentication,
+   * and every remaining route is protected by default. The JWT cookie filter runs before
+   * username/password authentication so the security context is populated from the signed cookie
+   * before authorization rules are evaluated.
    *
    * @param http Spring Security builder supplied by the framework
    * @param jwtFilter filter that extracts and validates the JWT auth cookie
@@ -127,6 +128,8 @@ public class SecurityConfig {
                         "/swagger-ui/**",
                         "/swagger-ui.html")
                     .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/v1/auth/me")
+                    .authenticated()
                     .requestMatchers(HttpMethod.POST, "/v1/users")
                     .hasAnyRole("ADMIN", "SUPERADMIN")
                     .requestMatchers("/v1/users/**")

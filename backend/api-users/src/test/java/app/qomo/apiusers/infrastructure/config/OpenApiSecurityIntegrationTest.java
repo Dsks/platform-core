@@ -30,7 +30,12 @@ class OpenApiSecurityIntegrationTest {
         .andExpect(jsonPath("$.info.version").value("0.0.1-SNAPSHOT"))
         .andExpect(jsonPath("$.components.securitySchemes.qomoAuthCookie.type").value("apiKey"))
         .andExpect(jsonPath("$.components.securitySchemes.qomoAuthCookie.in").value("cookie"))
-        .andExpect(jsonPath("$.components.securitySchemes.qomoAuthCookie.name").value("QOMO_AUTH"));
+        .andExpect(jsonPath("$.components.securitySchemes.qomoAuthCookie.name").value("QOMO_AUTH"))
+        .andExpect(jsonPath("$['paths']['/v1/auth/me']['get']['responses']['200']").exists())
+        .andExpect(jsonPath("$['paths']['/v1/auth/me']['get']['responses']['401']").exists())
+        .andExpect(
+            jsonPath("$['paths']['/v1/auth/me']['get']['security'][0]['qomoAuthCookie']")
+                .isArray());
   }
 
   @Test
@@ -43,5 +48,10 @@ class OpenApiSecurityIntegrationTest {
     mockMvc
         .perform(get("/v1/users/2fa8b8e9-3090-404e-a6e8-d95dd8e3b0ec"))
         .andExpect(status().isForbidden());
+  }
+
+  @Test
+  void currentUserRouteStillRequiresAuthentication() throws Exception {
+    mockMvc.perform(get("/v1/auth/me")).andExpect(status().isForbidden());
   }
 }
