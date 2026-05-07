@@ -2,7 +2,7 @@
 
 ## A. Purpose
 
-Practical first-line runbook for operating and diagnosing the backend email-verification path: `api-users`, `email-sender`, Nginx gateway, PostgreSQL, and Kafka/Redpanda.
+Practical first-line runbook for operating and diagnosing the Qomo backend email-verification path: `api-users`, `email-sender`, Nginx gateway, PostgreSQL, and Kafka/Redpanda.
 
 This does not cover frontend operation, `api-core` business workflows, production incident command, schema design, or manual data repair.
 
@@ -233,3 +233,66 @@ Prefer natural retries when rows are `FAILED` and attempts remain. Use controlle
 - `email-sender` has `/health`, but local Compose does not publish its port.
 - Current `gateway` profile cannot be used with only `infra`, `users`, and `email` because Compose `depends_on` also references `api-core` and both frontends.
 - Compose diagnostics on this workstation emitted `~/.docker/config.json: Access denied`; fix local Docker CLI permissions if it blocks operations.
+
+## Kafka topic initialization
+
+Kafka topics are not auto-created in pre-production/production environments.
+
+This is intentional: disabling topic auto-creation avoids silently creating wrong topics due to typos or misconfigured service properties.
+
+The email command flow requires this topic:
+
+```text
+qomo.email.commands
+```
+
+Create it manually when provisioning a new Kafka environment:
+
+```bash
+docker exec -it kafka /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create \
+  --if-not-exists \
+  --topic qomo.email.commands \
+  --partitions 1 \
+  --replication-factor 1
+```
+
+Verify that the topic exists:
+
+```bash
+docker exec -it kafka /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --list
+```
+
+Describe the topic:
+
+```bash
+docker exec -it kafka /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --describe \
+  --topic qomo.email.commands
+```
+
+Expected usage:
+
+- `api-users` publishes email command events to `qomo.email.commands`.
+- `email-sender` consumes from `qomo.email.commands`.
+
+If `api-users` logs this error:
+
+```text
+UNKNOWN_TOPIC_OR_PARTITION
+Topic qomo.email.commands not present in metadata after 60000 ms
+```
+
+then Kafka is reachable, but the topic does not exist or the configured topic name does not match.
+
+Check that both services use the same topic value:
+
+```text
+QOMO_TOPIC_EMAIL_COMMANDS=qomo.email.commands
+```
+
+Do not enable Kafka topic auto-creation in pre-production/production unless there is a deliberate operational reason.
