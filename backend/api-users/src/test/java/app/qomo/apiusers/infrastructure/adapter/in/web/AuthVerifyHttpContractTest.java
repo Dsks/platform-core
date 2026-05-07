@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import app.qomo.apiusers.application.exception.EmailAlreadyInUseException;
 import app.qomo.apiusers.application.exception.InvalidCredentialsException;
+import app.qomo.apiusers.application.port.in.GetCurrentUserUseCase;
 import app.qomo.apiusers.application.port.in.LoginUseCase;
 import app.qomo.apiusers.application.port.in.RegisterUserUseCase;
 import app.qomo.apiusers.application.port.in.ResendEmailVerificationUseCase;
@@ -55,6 +56,8 @@ class AuthVerifyHttpContractTest {
   @MockitoBean private LoginUseCase loginUseCase;
 
   @MockitoBean private RegisterUserUseCase registerUserUseCase;
+
+  @MockitoBean private GetCurrentUserUseCase getCurrentUserUseCase;
 
   @MockitoBean private VerifyEmailUseCase verifyEmailUseCase;
 

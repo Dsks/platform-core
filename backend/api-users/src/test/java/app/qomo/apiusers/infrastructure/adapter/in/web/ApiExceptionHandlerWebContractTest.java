@@ -13,6 +13,7 @@ import app.qomo.apiusers.application.exception.ForbiddenOperationException;
 import app.qomo.apiusers.application.exception.InvalidCommandException;
 import app.qomo.apiusers.application.exception.UserNotFoundException;
 import app.qomo.apiusers.application.port.in.CreateUserUseCase;
+import app.qomo.apiusers.application.port.in.GetCurrentUserUseCase;
 import app.qomo.apiusers.application.port.in.GetUserUseCase;
 import app.qomo.apiusers.application.port.in.LoginUseCase;
 import app.qomo.apiusers.application.port.in.RegisterUserUseCase;
@@ -38,6 +39,8 @@ class ApiExceptionHandlerWebContractTest {
   @MockitoBean private LoginUseCase loginUseCase;
 
   @MockitoBean private RegisterUserUseCase registerUserUseCase;
+
+  @MockitoBean private GetCurrentUserUseCase getCurrentUserUseCase;
 
   @MockitoBean private CreateUserUseCase createUserUseCase;
 
