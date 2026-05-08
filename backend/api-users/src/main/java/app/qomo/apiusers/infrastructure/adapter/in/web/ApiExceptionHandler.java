@@ -4,6 +4,7 @@ import app.qomo.apiusers.application.exception.ApplicationException;
 import app.qomo.apiusers.application.exception.EmailAlreadyInUseException;
 import app.qomo.apiusers.application.observability.PiiUtil;
 import app.qomo.apiusers.infrastructure.adapter.in.web.dto.RegistrationAcceptedResponse;
+import app.qomo.apiusers.infrastructure.adapter.in.web.dto.RegistrationAcceptedResponse.Status;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.net.URI;
@@ -26,9 +27,7 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
  * Translates application and request-binding failures into HTTP problem responses for the web API.
  *
  * <p>The handler owns the edge contract for validation errors, malformed JSON, and selected
- * application error codes. It also preserves registration anti-enumeration by converting
- * duplicate-email failures on the public registration route into the same generic accepted
- * response.
+ * application error codes. It also prevents duplicate-email responses from leaking raw email values.
  */
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -77,14 +76,15 @@ public class ApiExceptionHandler {
   /**
    * Handles duplicate-email failures with route-specific privacy behavior.
    *
-   * <p>For {@code POST /v1/auth/register}, this returns {@code 202 Accepted} with the same generic
-   * body as a successful public registration so callers cannot distinguish an existing account.
-   * Other routes receive {@code 409 Conflict} with empty params. The logged email value is
-   * fingerprinted rather than written in raw form.
+   * <p>For {@code POST /v1/auth/register}, this returns {@code 409 Conflict} with
+   * {@code ALREADY_REGISTERED}; this fallback is retained for older register use cases that may
+   * still signal verified duplicates through the exception path. Other routes receive
+   * {@code 409 Conflict} with empty params. The logged email value is fingerprinted rather than
+   * written in raw form.
    *
    * @param ex duplicate-email exception raised by the application layer
    * @param req current servlet request used to choose the public-registration contract
-   * @return generic accepted response for public registration, or a conflict problem elsewhere
+   * @return already-registered response for public registration, or a conflict problem elsewhere
    */
   @ExceptionHandler(EmailAlreadyInUseException.class)
   public ResponseEntity<?> handleEmailAlreadyInUse(
@@ -100,8 +100,9 @@ public class ApiExceptionHandler {
       var body =
           new RegistrationAcceptedResponse(
               java.util.UUID.randomUUID().toString(),
-              "If the email is valid, you'll receive next steps.");
-      return ResponseEntity.accepted().body(body);
+              Status.ALREADY_REGISTERED,
+              "Account already registered. Please sign in.");
+      return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
     var pd = buildProblem(HttpStatus.CONFLICT, ex.code(), ex.getMessage());

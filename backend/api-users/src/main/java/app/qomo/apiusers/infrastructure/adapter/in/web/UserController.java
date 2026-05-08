@@ -6,6 +6,7 @@ import app.qomo.apiusers.domain.model.Role;
 import app.qomo.apiusers.domain.model.UserId;
 import app.qomo.apiusers.infrastructure.adapter.in.web.dto.CreateUserRequest;
 import app.qomo.apiusers.infrastructure.adapter.in.web.dto.RegistrationAcceptedResponse;
+import app.qomo.apiusers.infrastructure.adapter.in.web.dto.RegistrationAcceptedResponse.Status;
 import app.qomo.apiusers.infrastructure.adapter.in.web.dto.UserResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -131,6 +132,7 @@ public class UserController {
     var body =
         new RegistrationAcceptedResponse(
             java.util.UUID.randomUUID().toString(),
+            Status.VERIFICATION_REQUIRED,
             "If the email is valid, you'll receive next steps.");
 
     return ResponseEntity.accepted().body(body);

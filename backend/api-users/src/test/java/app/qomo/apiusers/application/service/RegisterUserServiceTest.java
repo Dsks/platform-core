@@ -14,6 +14,7 @@ import static org.mockito.Mockito.when;
 import app.qomo.apiusers.application.exception.InvalidCommandException;
 import app.qomo.apiusers.application.exception.RoleNotFoundException;
 import app.qomo.apiusers.application.port.in.RegisterUserUseCase;
+import app.qomo.apiusers.application.port.in.RegisterUserUseCase.RegistrationStatus;
 import app.qomo.apiusers.application.port.out.ClockPort;
 import app.qomo.apiusers.application.port.out.PasswordHasherPort;
 import app.qomo.apiusers.application.port.out.RoleRepositoryPort;
@@ -78,6 +79,7 @@ class RegisterUserServiceTest {
     var result = service.register(command);
 
     assertNotNull(result.requestId());
+    assertEquals(RegistrationStatus.VERIFICATION_REQUIRED, result.status());
     assertEquals(issuedSessionId, result.verificationSessionId());
     assertEquals(900, result.verificationTtlSeconds());
 
@@ -107,7 +109,7 @@ class RegisterUserServiceTest {
   }
 
   @Test
-  void register_shouldReturnNoVerificationSessionAndSkipWrites_whenExistingUserIsVerified() {
+  void register_shouldReturnAlreadyRegisteredAndSkipWrites_whenExistingUserIsVerified() {
     var verifiedUser = existingUser(true);
     var command = new RegisterUserUseCase.Command("existing@example.com", "irrelevant");
 
@@ -116,6 +118,7 @@ class RegisterUserServiceTest {
     var result = service.register(command);
 
     assertNotNull(result.requestId());
+    assertEquals(RegistrationStatus.ALREADY_REGISTERED, result.status());
     assertNull(result.verificationSessionId());
     assertEquals(0, result.verificationTtlSeconds());
 
@@ -143,6 +146,7 @@ class RegisterUserServiceTest {
     var result = service.register(command);
 
     assertNotNull(result.requestId());
+    assertEquals(RegistrationStatus.VERIFICATION_REQUIRED, result.status());
     assertEquals(issuedSessionId, result.verificationSessionId());
     assertEquals(300, result.verificationTtlSeconds());
 

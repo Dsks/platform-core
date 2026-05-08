@@ -35,6 +35,10 @@ class OpenApiSecurityIntegrationTest {
         .andExpect(jsonPath("$['paths']['/v1/auth/me']['get']['responses']['401']").exists())
         .andExpect(
             jsonPath("$['paths']['/v1/auth/me']['get']['security'][0]['qomoAuthCookie']")
+                .isArray())
+        .andExpect(jsonPath("$['paths']['/v1/auth/logout']['post']['responses']['204']").exists())
+        .andExpect(
+            jsonPath("$['paths']['/v1/auth/logout']['post']['security'][0]['qomoAuthCookie']")
                 .isArray());
   }
 
