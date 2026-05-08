@@ -13,6 +13,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
 /**
  * Centralizes HTTP security wiring for the users API.
@@ -26,7 +27,8 @@ import org.springframework.security.web.csrf.CsrfTokenRepository;
  * <p>The chain is intentionally stateless: authenticated requests are reconstructed from the JWT
  * cookie on each call instead of relying on server-side sessions. Public authentication and email
  * verification endpoints are excluded from CSRF checks because they need to be callable before a
- * client has an authenticated session context.
+ * client has an authenticated session context. Logout is intentionally authenticated and
+ * CSRF-protected because it mutates the browser session.
  */
 @Configuration
 @EnableWebSecurity
@@ -79,14 +81,26 @@ public class SecurityConfig {
   }
 
   /**
+   * Keeps the JSON CSRF bootstrap contract simple for API clients.
+   *
+   * <p>The client obtains the token from {@code GET /v1/auth/csrf} and echoes that exact value in
+   * the returned header name. Using the non-XOR handler keeps that body/header value aligned with
+   * the token stored by {@link CookieCsrfTokenRepository}.
+   */
+  @Bean
+  public CsrfTokenRequestAttributeHandler csrfTokenRequestHandler() {
+    return new CsrfTokenRequestAttributeHandler();
+  }
+
+  /**
    * Builds the HTTP authorization chain for the users API.
    *
    * <p>Login, registration, CSRF token retrieval, email verification, verification resend, health
-   * checks, and OpenAPI/Swagger assets are public. Current-user lookup is authenticated, user
-   * creation is limited to ADMIN and SUPERADMIN roles, other users routes require authentication,
-   * and every remaining route is protected by default. The JWT cookie filter runs before
-   * username/password authentication so the security context is populated from the signed cookie
-   * before authorization rules are evaluated.
+   * checks, and OpenAPI/Swagger assets are public. Current-user lookup and logout are
+   * authenticated, user creation is limited to ADMIN and SUPERADMIN roles, other users routes
+   * require authentication, and every remaining route is protected by default. The JWT cookie
+   * filter runs before username/password authentication so the security context is populated from
+   * the signed cookie before authorization rules are evaluated.
    *
    * @param http Spring Security builder supplied by the framework
    * @param jwtFilter filter that extracts and validates the JWT auth cookie
@@ -94,12 +108,16 @@ public class SecurityConfig {
    */
   @Bean
   public SecurityFilterChain securityFilterChain(
-      HttpSecurity http, JwtCookieAuthFilter jwtFilter, CsrfTokenRepository csrfTokenRepository)
+      HttpSecurity http,
+      JwtCookieAuthFilter jwtFilter,
+      CsrfTokenRepository csrfTokenRepository,
+      CsrfTokenRequestAttributeHandler csrfTokenRequestHandler)
       throws Exception {
     // CSRF stays active for protected browser writes; only pre-auth flows are exempted.
     http.csrf(
             csrf ->
                 csrf.csrfTokenRepository(csrfTokenRepository)
+                    .csrfTokenRequestHandler(csrfTokenRequestHandler)
                     .ignoringRequestMatchers(
                         "/v1/auth/login",
                         "/v1/auth/register",
@@ -115,6 +133,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/v1/auth/csrf")
                     .permitAll()
+                    .requestMatchers(HttpMethod.POST, "/v1/auth/logout")
+                    .authenticated()
                     .requestMatchers(HttpMethod.POST, "/v1/users/verify-email")
                     .permitAll()
                     .requestMatchers(HttpMethod.POST, "/v1/users/verification/resend")

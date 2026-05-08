@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -121,7 +122,7 @@ class ApiExceptionHandlerWebContractTest {
   }
 
   @Test
-  void register_whenEmailAlreadyInUse_shouldReturnAcceptedGenericResponse() throws Exception {
+  void register_whenEmailAlreadyInUse_shouldReturnAlreadyRegisteredConflict() throws Exception {
     when(registerUserUseCase.register(any()))
         .thenThrow(new EmailAlreadyInUseException("used@example.com"));
 
@@ -133,10 +134,8 @@ class ApiExceptionHandlerWebContractTest {
                     """
                         {"email":"used@example.com","password":"StrongPass123!"}
                         """))
-        .andExpect(status().isAccepted())
-        .andExpect(jsonPath("$.requestId").isString())
-        .andExpect(jsonPath("$.message").value("If the email is valid, you'll receive next steps."))
-        .andExpect(jsonPath("$.title").doesNotExist());
+        .andExpect(status().isConflict())
+        .andExpect(content().string("{\"status\":\"ALREADY_REGISTERED\"}"));
   }
 
   @Test

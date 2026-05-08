@@ -6,6 +6,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -15,6 +16,7 @@ import app.qomo.apiusers.application.exception.InvalidCredentialsException;
 import app.qomo.apiusers.application.port.in.GetCurrentUserUseCase;
 import app.qomo.apiusers.application.port.in.LoginUseCase;
 import app.qomo.apiusers.application.port.in.RegisterUserUseCase;
+import app.qomo.apiusers.application.port.in.RegisterUserUseCase.RegistrationStatus;
 import app.qomo.apiusers.application.port.in.ResendEmailVerificationUseCase;
 import app.qomo.apiusers.application.port.in.VerifyEmailUseCase;
 import app.qomo.apiusers.application.port.out.ClockPort;
@@ -125,6 +127,27 @@ class AuthVerifyHttpContractTest {
   }
 
   @Test
+  void logout_shouldReturn204AndExpireAuthCookie() throws Exception {
+    var response =
+        mockMvc
+            .perform(post("/v1/auth/logout"))
+            .andExpect(status().isNoContent())
+            .andExpect(content().string(""))
+            .andExpect(header().exists(HttpHeaders.SET_COOKIE))
+            .andReturn()
+            .getResponse();
+
+    String setCookie = response.getHeader(HttpHeaders.SET_COOKIE);
+    Assertions.assertNotNull(setCookie);
+    Assertions.assertTrue(setCookie.contains("QOMO_AUTH="));
+    Assertions.assertTrue(setCookie.contains("HttpOnly"));
+    Assertions.assertTrue(setCookie.contains("Secure"));
+    Assertions.assertTrue(setCookie.contains("Path=/"));
+    Assertions.assertTrue(setCookie.contains("SameSite=Strict"));
+    Assertions.assertTrue(setCookie.contains("Max-Age=0"));
+  }
+
+  @Test
   void login_shouldReturnForbiddenAndSetVerificationCookie_whenEmailIsNotVerifiedWithSession()
       throws Exception {
     UUID verificationSessionId = UUID.fromString("11111111-2222-4333-8444-555555555555");
@@ -180,7 +203,10 @@ class AuthVerifyHttpContractTest {
     when(registerUserUseCase.register(any()))
         .thenReturn(
             new RegisterUserUseCase.Result(
-                "req-123", UUID.fromString("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"), 300));
+                "req-123",
+                RegistrationStatus.VERIFICATION_REQUIRED,
+                UUID.fromString("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"),
+                300));
 
     var response =
         mockMvc
@@ -192,9 +218,7 @@ class AuthVerifyHttpContractTest {
                             {"email":"new@example.com","password":"s3cret"}
                             """))
             .andExpect(status().isAccepted())
-            .andExpect(jsonPath("$.requestId").value("req-123"))
-            .andExpect(
-                jsonPath("$.message").value("If the email is valid, you'll receive next steps."))
+            .andExpect(content().string("{\"status\":\"VERIFICATION_REQUIRED\"}"))
             .andReturn()
             .getResponse();
 
@@ -206,7 +230,78 @@ class AuthVerifyHttpContractTest {
   }
 
   @Test
-  void register_shouldReturnGenericAcceptedResponse_whenEmailAlreadyExists() throws Exception {
+  void register_shouldReturnSameAcceptedBodyForNewAndExistingUnverifiedEmails() throws Exception {
+    when(registerUserUseCase.register(any()))
+        .thenReturn(
+            new RegisterUserUseCase.Result(
+                "req-new",
+                RegistrationStatus.VERIFICATION_REQUIRED,
+                UUID.fromString("aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"),
+                300))
+        .thenReturn(
+            new RegisterUserUseCase.Result(
+                "req-existing-unverified",
+                RegistrationStatus.VERIFICATION_REQUIRED,
+                UUID.fromString("ffffffff-eeee-4ddd-8ccc-bbbbbbbbbbbb"),
+                300));
+
+    var newEmailResponse =
+        mockMvc
+            .perform(
+                post("/v1/auth/register")
+                    .contentType("application/json")
+                    .content(
+                        """
+                            {"email":"new@example.com","password":"s3cret"}
+                            """))
+            .andExpect(status().isAccepted())
+            .andExpect(content().string("{\"status\":\"VERIFICATION_REQUIRED\"}"))
+            .andExpect(header().exists(HttpHeaders.SET_COOKIE))
+            .andReturn()
+            .getResponse();
+
+    var existingUnverifiedResponse =
+        mockMvc
+            .perform(
+                post("/v1/auth/register")
+                    .contentType("application/json")
+                    .content(
+                        """
+                            {"email":"existing-unverified@example.com","password":"s3cret"}
+                            """))
+            .andExpect(status().isAccepted())
+            .andExpect(content().string("{\"status\":\"VERIFICATION_REQUIRED\"}"))
+            .andExpect(header().exists(HttpHeaders.SET_COOKIE))
+            .andReturn()
+            .getResponse();
+
+    Assertions.assertEquals(
+        newEmailResponse.getContentAsString(), existingUnverifiedResponse.getContentAsString());
+  }
+
+  @Test
+  void register_shouldReturnConflict_whenExistingUserIsAlreadyVerified() throws Exception {
+    when(registerUserUseCase.register(any()))
+        .thenReturn(
+            new RegisterUserUseCase.Result(
+                "req-registered", RegistrationStatus.ALREADY_REGISTERED, null, 0));
+
+    mockMvc
+        .perform(
+            post("/v1/auth/register")
+                .contentType("application/json")
+                .content(
+                    """
+                        {"email":"used@example.com","password":"s3cret"}
+                        """))
+        .andExpect(status().isConflict())
+        .andExpect(content().string("{\"status\":\"ALREADY_REGISTERED\"}"))
+        .andExpect(header().doesNotExist(HttpHeaders.SET_COOKIE));
+  }
+
+  @Test
+  void register_shouldReturnConflictAlreadyRegistered_whenEmailAlreadyInUseIsThrown()
+      throws Exception {
     when(registerUserUseCase.register(any()))
         .thenThrow(new EmailAlreadyInUseException("used@example.com"));
 
@@ -218,10 +313,8 @@ class AuthVerifyHttpContractTest {
                     """
                         {"email":"used@example.com","password":"s3cret"}
                         """))
-        .andExpect(status().isAccepted())
-        .andExpect(jsonPath("$.requestId").isString())
-        .andExpect(jsonPath("$.message").value("If the email is valid, you'll receive next steps."))
-        .andExpect(jsonPath("$.title").doesNotExist());
+        .andExpect(status().isConflict())
+        .andExpect(content().string("{\"status\":\"ALREADY_REGISTERED\"}"));
   }
 
   @Test

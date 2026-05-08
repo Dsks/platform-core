@@ -9,6 +9,7 @@ import app.qomo.apiusers.infrastructure.adapter.in.web.dto.CurrentUserResponse;
 import app.qomo.apiusers.infrastructure.adapter.in.web.dto.LoginRequest;
 import app.qomo.apiusers.infrastructure.adapter.in.web.dto.RegisterRequest;
 import app.qomo.apiusers.infrastructure.adapter.in.web.dto.RegistrationAcceptedResponse;
+import app.qomo.apiusers.infrastructure.adapter.in.web.dto.RegistrationAcceptedResponse.Status;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -39,21 +40,20 @@ import org.springframework.web.bind.annotation.RestController;
  *
  * <p>The controller delegates credential and registration decisions to {@link LoginUseCase} and
  * {@link RegisterUserUseCase}; it only translates application results into HTTP responses and
- * browser cookies. Successful login issues the JWT as an HttpOnly cookie, while registration or an
- * unverified login can issue a separate verification-session cookie. Registration responses remain
- * generic so clients cannot use this boundary to confirm whether an email already belongs to an
- * account.
+ * browser cookies. Successful login issues the JWT as an HttpOnly cookie, logout expires that
+ * cookie with the same browser attributes, while registration or an unverified login can issue a
+ * separate verification-session cookie. Registration keeps new accounts and existing unverified
+ * accounts indistinguishable, while existing verified accounts return an explicit
+ * already-registered outcome so clients can route legitimate users to login.
  */
 @RestController
 @RequestMapping("/v1/auth")
 @Tag(
     name = "Auth",
-    description = "Registration, login, current user, and CSRF bootstrap endpoints.")
+    description = "Registration, login, logout, current user, and CSRF bootstrap endpoints.")
 public class AuthController {
 
   public static final String AUTH_COOKIE_NAME = "QOMO_AUTH";
-  private static final String REGISTRATION_ACCEPTED_MESSAGE =
-      "If the email is valid, you'll receive next steps.";
 
   private final LoginUseCase loginUseCase;
   private final RegisterUserUseCase registerUserUseCase;
@@ -262,31 +262,78 @@ public class AuthController {
   }
 
   /**
-   * Accepts a public registration request without exposing account-existence details.
+   * Ends the current browser authentication session.
+   *
+   * <p>The endpoint returns {@code 204 No Content} and writes {@value #AUTH_COOKIE_NAME} with the
+   * same HttpOnly, Secure, SameSite, and path attributes used by login, but with {@code Max-Age=0}
+   * so the browser expires the cookie. The endpoint is authenticated and remains CSRF-protected by
+   * the security chain because it changes browser session state.
+   *
+   * @return a no-content response with an expired auth cookie
+   */
+  @Operation(
+      summary = "End the authentication session",
+      description =
+          "Expires the QOMO_AUTH HTTP-only authentication cookie. The response has no body and uses"
+              + " the same cookie attributes as login with Max-Age=0.",
+      security = @SecurityRequirement(name = "qomoAuthCookie"))
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "204",
+        description = "Logout completed. The QOMO_AUTH cookie is expired on the response.",
+        headers =
+            @Header(
+                name = "Set-Cookie",
+                description = "Expires the QOMO_AUTH HTTP-only authentication cookie.",
+                schema = @Schema(type = "string")),
+        content = @Content()),
+    @ApiResponse(
+        responseCode = "401",
+        description = "Authentication requirements are not satisfied.",
+        content = @Content()),
+    @ApiResponse(
+        responseCode = "403",
+        description = "Authentication or CSRF requirements are not satisfied.",
+        content =
+            @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class)))
+  })
+  @PostMapping("/logout")
+  public ResponseEntity<Void> logout() {
+    ResponseCookie cookie =
+        buildHttpOnlyCookie(AUTH_COOKIE_NAME, "", cookieSecure, sameSite, Duration.ZERO);
+
+    return ResponseEntity.noContent().header(HttpHeaders.SET_COOKIE, cookie.toString()).build();
+  }
+
+  /**
+   * Accepts a public registration request without exposing new-vs-unverified account details.
    *
    * <p>The endpoint delegates account creation and verification-session creation to {@link
-   * RegisterUserUseCase}. It returns {@code 202 Accepted} with a generic {@link
-   * RegistrationAcceptedResponse}; if the application created a verification session, the response
-   * also writes the verification cookie. That cookie is HttpOnly, scoped to {@code /}, uses the
-   * configured Secure and SameSite policies, and expires with the application-provided session TTL.
-   * Duplicate-email handling is delegated to {@link ApiExceptionHandler}, which preserves the same
-   * generic response shape for this public route. Validation and malformed-body errors are handled
-   * globally.
+   * RegisterUserUseCase}. It returns {@code 202 Accepted} with {@code VERIFICATION_REQUIRED} for
+   * new accounts and existing unverified accounts; if the application created a verification
+   * session, the response also writes the verification cookie. That cookie is HttpOnly, scoped to
+   * {@code /}, uses the configured Secure and SameSite policies, and expires with the
+   * application-provided session TTL. Existing verified accounts return {@code 409 Conflict} with
+   * {@code ALREADY_REGISTERED}. Validation and malformed-body errors are handled globally.
    *
    * @param request validated email and password from the JSON request body
-   * @return a generic accepted response, optionally with a verification-session cookie
+   * @return a registration outcome response, optionally with a verification-session cookie
    */
   @Operation(
       summary = "Register a user account",
       description =
-          "Accepts a public registration request and returns a generic accepted response. The"
-              + " response intentionally does not reveal whether the submitted email already"
-              + " belongs to an account. When applicable, the response may set a verification"
-              + " cookie for the email-verification flow.")
+          "Accepts a public registration request. New accounts and existing unverified accounts"
+              + " both return VERIFICATION_REQUIRED so the client cannot distinguish them. Existing"
+              + " verified accounts return ALREADY_REGISTERED so the client can route users to"
+              + " login.")
   @ApiResponses({
     @ApiResponse(
         responseCode = "202",
-        description = "Registration request accepted with a generic anti-enumeration response.",
+        description =
+            "Registration request accepted with VERIFICATION_REQUIRED. This response covers"
+                + " both new accounts and existing unverified accounts.",
         headers =
             @Header(
                 name = "Set-Cookie",
@@ -304,7 +351,16 @@ public class AuthController {
         content =
             @Content(
                 mediaType = "application/problem+json",
-                schema = @Schema(implementation = ProblemDetail.class)))
+                schema = @Schema(implementation = ProblemDetail.class))),
+    @ApiResponse(
+        responseCode = "409",
+        description =
+            "The submitted email belongs to an already verified account; returns"
+                + " ALREADY_REGISTERED.",
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = RegistrationAcceptedResponse.class)))
   })
   @PostMapping("/register")
   public ResponseEntity<RegistrationAcceptedResponse> register(
@@ -323,8 +379,13 @@ public class AuthController {
         registerUserUseCase.register(
             new RegisterUserUseCase.Command(request.email(), request.password()));
 
-    // The body stays generic regardless of whether persistence created a new account.
-    var body = new RegistrationAcceptedResponse(result.requestId(), REGISTRATION_ACCEPTED_MESSAGE);
+    if (result.status() == RegisterUserUseCase.RegistrationStatus.ALREADY_REGISTERED) {
+      var body = new RegistrationAcceptedResponse(Status.ALREADY_REGISTERED);
+      return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    // The body stays generic for new and existing-unverified accounts.
+    var body = new RegistrationAcceptedResponse(Status.VERIFICATION_REQUIRED);
     if (result.verificationSessionId() == null) {
       return ResponseEntity.accepted().body(body);
     }

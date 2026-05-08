@@ -8,6 +8,8 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -24,17 +26,20 @@ import app.qomo.apiusers.domain.model.UserId;
 import app.qomo.apiusers.infrastructure.adapter.in.web.AuthController;
 import app.qomo.apiusers.infrastructure.adapter.in.web.UserController;
 import app.qomo.apiusers.infrastructure.adapter.in.web.VerifyEmailController;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.Set;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -44,6 +49,8 @@ import org.springframework.test.web.servlet.MockMvc;
 class SecurityConfigJwtWebLayerTest {
 
   @Autowired private MockMvc mockMvc;
+
+  private final ObjectMapper objectMapper = new ObjectMapper();
 
   @MockitoBean private LoginUseCase loginUseCase;
   @MockitoBean private RegisterUserUseCase registerUserUseCase;
@@ -62,6 +69,13 @@ class SecurityConfigJwtWebLayerTest {
   }
 
   @Test
+  void loginRouteDoesNotRequireCsrf() throws Exception {
+    mockMvc
+        .perform(post("/v1/auth/login").contentType(MediaType.APPLICATION_JSON).content("{}"))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
   void protectedUserRouteReturnsForbiddenWhenJwtCookieIsMissing() throws Exception {
     mockMvc
         .perform(get("/v1/users/2fa8b8e9-3090-404e-a6e8-d95dd8e3b0ec"))
@@ -74,6 +88,94 @@ class SecurityConfigJwtWebLayerTest {
     mockMvc.perform(get("/v1/auth/me")).andExpect(status().isForbidden());
 
     verify(getCurrentUserUseCase, never()).getCurrentUser();
+  }
+
+  @Test
+  void logoutRouteReturnsForbiddenWhenJwtCookieIsMissing() throws Exception {
+    mockMvc.perform(post("/v1/auth/logout").with(csrf())).andExpect(status().isForbidden());
+  }
+
+  @Test
+  void logoutRouteReturnsForbiddenWhenCsrfTokenIsMissing() throws Exception {
+    when(clockPort.now()).thenReturn(Instant.parse("2026-03-26T10:15:30Z"));
+    when(jwtTokenProviderPort.validate(eq("logout-jwt"), any(Instant.class))).thenReturn(true);
+    when(jwtTokenProviderPort.subject("logout-jwt"))
+        .thenReturn("33333333-3333-4333-8333-333333333333");
+    when(jwtTokenProviderPort.roles("logout-jwt")).thenReturn(Set.of("USER"));
+
+    mockMvc
+        .perform(
+            post("/v1/auth/logout")
+                .cookie(new Cookie(AuthController.AUTH_COOKIE_NAME, "logout-jwt")))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  void logoutRouteAllowsAuthenticatedUserWithCsrfAndExpiresAuthCookie() throws Exception {
+    when(clockPort.now()).thenReturn(Instant.parse("2026-03-26T10:15:30Z"));
+    when(jwtTokenProviderPort.validate(eq("logout-jwt"), any(Instant.class))).thenReturn(true);
+    when(jwtTokenProviderPort.subject("logout-jwt"))
+        .thenReturn("33333333-3333-4333-8333-333333333333");
+    when(jwtTokenProviderPort.roles("logout-jwt")).thenReturn(Set.of("USER"));
+
+    mockMvc
+        .perform(
+            post("/v1/auth/logout")
+                .with(csrf())
+                .cookie(new Cookie(AuthController.AUTH_COOKIE_NAME, "logout-jwt")))
+        .andExpect(status().isNoContent())
+        .andExpect(content().string(""))
+        .andExpect(header().string(HttpHeaders.SET_COOKIE, Matchers.containsString("QOMO_AUTH=")))
+        .andExpect(header().string(HttpHeaders.SET_COOKIE, Matchers.containsString("Max-Age=0")))
+        .andExpect(header().string(HttpHeaders.SET_COOKIE, Matchers.containsString("Path=/")));
+  }
+
+  @Test
+  void logoutRouteAcceptsTokenReturnedByCsrfEndpoint() throws Exception {
+    when(clockPort.now()).thenReturn(Instant.parse("2026-03-26T10:15:30Z"));
+    when(jwtTokenProviderPort.validate(eq("logout-jwt"), any(Instant.class))).thenReturn(true);
+    when(jwtTokenProviderPort.subject("logout-jwt"))
+        .thenReturn("33333333-3333-4333-8333-333333333333");
+    when(jwtTokenProviderPort.roles("logout-jwt")).thenReturn(Set.of("USER"));
+
+    var csrfResponse =
+        mockMvc
+            .perform(get("/v1/auth/csrf"))
+            .andExpect(status().isOk())
+            .andExpect(header().exists(HttpHeaders.SET_COOKIE))
+            .andReturn()
+            .getResponse();
+    var csrfJson = objectMapper.readTree(csrfResponse.getContentAsString());
+    Cookie csrfCookie = csrfResponse.getCookie("XSRF-TOKEN");
+
+    Assertions.assertNotNull(csrfCookie);
+
+    var logoutResponse =
+        mockMvc
+            .perform(
+                post("/v1/auth/logout")
+                    .header(csrfJson.get("headerName").asText(), csrfJson.get("token").asText())
+                    .cookie(csrfCookie)
+                    .cookie(new Cookie(AuthController.AUTH_COOKIE_NAME, "logout-jwt")))
+            .andExpect(status().isNoContent())
+            .andReturn()
+            .getResponse();
+
+    var setCookies = logoutResponse.getHeaders(HttpHeaders.SET_COOKIE);
+    Assertions.assertTrue(
+        setCookies.stream()
+            .anyMatch(
+                cookie ->
+                    cookie.startsWith("QOMO_AUTH=")
+                        && cookie.contains("Max-Age=0")
+                        && cookie.contains("Path=/")));
+    Assertions.assertTrue(
+        setCookies.stream()
+            .anyMatch(
+                cookie ->
+                    cookie.startsWith("XSRF-TOKEN=")
+                        && cookie.contains("Max-Age=0")
+                        && cookie.contains("Path=/")));
   }
 
   @Test
