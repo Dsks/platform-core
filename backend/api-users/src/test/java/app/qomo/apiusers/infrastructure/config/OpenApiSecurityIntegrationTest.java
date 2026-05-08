@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import app.qomo.apiusers.TestContainersConfig;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -34,8 +35,27 @@ class OpenApiSecurityIntegrationTest {
         .andExpect(jsonPath("$['paths']['/v1/auth/me']['get']['responses']['200']").exists())
         .andExpect(jsonPath("$['paths']['/v1/auth/me']['get']['responses']['401']").exists())
         .andExpect(
-            jsonPath("$['paths']['/v1/auth/me']['get']['security'][0]['qomoAuthCookie']")
-                .isArray())
+            jsonPath("$['paths']['/v1/auth/me']['get']['security'][0]['qomoAuthCookie']").isArray())
+        .andExpect(jsonPath("$['paths']['/v1/auth/register']['post']['responses']['202']").exists())
+        .andExpect(jsonPath("$['paths']['/v1/auth/register']['post']['responses']['409']").exists())
+        .andExpect(
+            jsonPath(
+                    "$['paths']['/v1/auth/register']['post']['responses']['202']['content']"
+                        + "['application/json']['schema']['$ref']")
+                .value("#/components/schemas/RegistrationAcceptedResponse"))
+        .andExpect(
+            jsonPath(
+                    "$['paths']['/v1/auth/register']['post']['responses']['409']['content']"
+                        + "['application/json']['schema']['$ref']")
+                .value("#/components/schemas/RegistrationAcceptedResponse"))
+        .andExpect(
+            jsonPath(
+                "$['paths']['/v1/auth/register']['post']['responses']['202']['description']",
+                Matchers.containsString("VERIFICATION_REQUIRED")))
+        .andExpect(
+            jsonPath(
+                "$['paths']['/v1/auth/register']['post']['responses']['409']['description']",
+                Matchers.containsString("ALREADY_REGISTERED")))
         .andExpect(jsonPath("$['paths']['/v1/auth/logout']['post']['responses']['204']").exists())
         .andExpect(
             jsonPath("$['paths']['/v1/auth/logout']['post']['security'][0]['qomoAuthCookie']")

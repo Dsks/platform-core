@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -134,10 +135,7 @@ class ApiExceptionHandlerWebContractTest {
                         {"email":"used@example.com","password":"StrongPass123!"}
                         """))
         .andExpect(status().isConflict())
-        .andExpect(jsonPath("$.requestId").isString())
-        .andExpect(jsonPath("$.status").value("ALREADY_REGISTERED"))
-        .andExpect(jsonPath("$.message").value("Account already registered. Please sign in."))
-        .andExpect(jsonPath("$.title").doesNotExist());
+        .andExpect(content().string("{\"status\":\"ALREADY_REGISTERED\"}"));
   }
 
   @Test

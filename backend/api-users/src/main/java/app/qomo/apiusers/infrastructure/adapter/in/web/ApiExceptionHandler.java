@@ -27,7 +27,8 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
  * Translates application and request-binding failures into HTTP problem responses for the web API.
  *
  * <p>The handler owns the edge contract for validation errors, malformed JSON, and selected
- * application error codes. It also prevents duplicate-email responses from leaking raw email values.
+ * application error codes. It also prevents duplicate-email responses from leaking raw email
+ * values.
  */
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -76,11 +77,11 @@ public class ApiExceptionHandler {
   /**
    * Handles duplicate-email failures with route-specific privacy behavior.
    *
-   * <p>For {@code POST /v1/auth/register}, this returns {@code 409 Conflict} with
-   * {@code ALREADY_REGISTERED}; this fallback is retained for older register use cases that may
-   * still signal verified duplicates through the exception path. Other routes receive
-   * {@code 409 Conflict} with empty params. The logged email value is fingerprinted rather than
-   * written in raw form.
+   * <p>For {@code POST /v1/auth/register}, this returns {@code 409 Conflict} with {@code
+   * ALREADY_REGISTERED}; this fallback is retained for older register use cases that may still
+   * signal verified duplicates through the exception path. Other routes receive {@code 409
+   * Conflict} with empty params. The logged email value is fingerprinted rather than written in raw
+   * form.
    *
    * @param ex duplicate-email exception raised by the application layer
    * @param req current servlet request used to choose the public-registration contract
@@ -97,11 +98,7 @@ public class ApiExceptionHandler {
         email_fp);
 
     if (isPublicRegistration(req)) {
-      var body =
-          new RegistrationAcceptedResponse(
-              java.util.UUID.randomUUID().toString(),
-              Status.ALREADY_REGISTERED,
-              "Account already registered. Please sign in.");
+      var body = new RegistrationAcceptedResponse(Status.ALREADY_REGISTERED);
       return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 

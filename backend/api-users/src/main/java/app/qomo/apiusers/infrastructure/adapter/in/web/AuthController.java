@@ -54,10 +54,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
   public static final String AUTH_COOKIE_NAME = "QOMO_AUTH";
-  private static final String REGISTRATION_ACCEPTED_MESSAGE =
-      "If the email is valid, you'll receive next steps.";
-  private static final String ALREADY_REGISTERED_MESSAGE =
-      "Account already registered. Please sign in.";
 
   private final LoginUseCase loginUseCase;
   private final RegisterUserUseCase registerUserUseCase;
@@ -83,7 +79,7 @@ public class AuthController {
       @Value("${qomo.security.verification.cookie.name:QOMO_VERIF}") String verificationCookieName,
       @Value("${qomo.security.verification.cookie.secure:false}") boolean verificationCookieSecure,
       @Value("${qomo.security.verification.cookie.same-site:Lax}")
-      String verificationCookieSameSite) {
+          String verificationCookieSameSite) {
     this.loginUseCase = loginUseCase;
     this.registerUserUseCase = registerUserUseCase;
     this.getCurrentUserUseCase = getCurrentUserUseCase;
@@ -116,31 +112,31 @@ public class AuthController {
               + " internal token material.",
       security = @SecurityRequirement(name = "qomoAuthCookie"))
   @ApiResponses({
-      @ApiResponse(
-          responseCode = "200",
-          description = "Current authenticated user.",
-          content =
-          @Content(
-              mediaType = "application/json",
-              schema = @Schema(implementation = CurrentUserResponse.class))),
-      @ApiResponse(
-          responseCode = "401",
-          description = "Authentication requirements are not satisfied.",
-          content = @Content()),
-      @ApiResponse(
-          responseCode = "403",
-          description = "The authenticated account cannot access this endpoint in its current state.",
-          content =
-          @Content(
-              mediaType = "application/problem+json",
-              schema = @Schema(implementation = ProblemDetail.class))),
-      @ApiResponse(
-          responseCode = "404",
-          description = "The authenticated user no longer exists.",
-          content =
-          @Content(
-              mediaType = "application/problem+json",
-              schema = @Schema(implementation = ProblemDetail.class)))
+    @ApiResponse(
+        responseCode = "200",
+        description = "Current authenticated user.",
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = CurrentUserResponse.class))),
+    @ApiResponse(
+        responseCode = "401",
+        description = "Authentication requirements are not satisfied.",
+        content = @Content()),
+    @ApiResponse(
+        responseCode = "403",
+        description = "The authenticated account cannot access this endpoint in its current state.",
+        content =
+            @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class))),
+    @ApiResponse(
+        responseCode = "404",
+        description = "The authenticated user no longer exists.",
+        content =
+            @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class)))
   })
   @GetMapping("/me")
   public ResponseEntity<CurrentUserResponse> me() {
@@ -168,7 +164,7 @@ public class AuthController {
    *
    * @param request validated login credentials from the JSON request body
    * @return a no-content response with the auth cookie, or a problem response for an unverified
-   * account
+   *     account
    */
   @Operation(
       summary = "Create an authentication session",
@@ -177,60 +173,60 @@ public class AuthController {
               + " QOMO_AUTH HTTP cookie. Invalid credentials and accounts that still require email"
               + " verification or cannot complete login are returned as problem details.")
   @ApiResponses({
-      @ApiResponse(
-          responseCode = "204",
-          description = "Login completed. The QOMO_AUTH cookie is set on the response.",
-          headers =
-          @Header(
-              name = "Set-Cookie",
-              description =
-                  "Sets the QOMO_AUTH HTTP-only authentication cookie. The cookie value is"
-                      + " sensitive and is not documented.",
-              schema = @Schema(type = "string")),
-          content = @Content()),
-      @ApiResponse(
-          responseCode = "400",
-          description = "The request body is malformed or fails validation.",
-          content =
-          @Content(
-              mediaType = "application/problem+json",
-              schema = @Schema(implementation = ProblemDetail.class))),
-      @ApiResponse(
-          responseCode = "401",
-          description = "Credentials are invalid.",
-          content =
-          @Content(
-              mediaType = "application/problem+json",
-              schema = @Schema(implementation = ProblemDetail.class))),
-      @ApiResponse(
-          responseCode = "403",
-          description =
-              "Login cannot be completed for the account state. When email verification is required,"
-                  + " a verification-session cookie may be set.",
-          headers =
-          @Header(
-              name = "Set-Cookie",
-              description =
-                  "May set a verification-session cookie so the browser can continue the"
-                      + " email-verification flow. No authentication cookie is issued.",
-              schema = @Schema(type = "string")),
-          content =
-          @Content(
-              mediaType = "application/problem+json",
-              schema = @Schema(implementation = ProblemDetail.class)))
+    @ApiResponse(
+        responseCode = "204",
+        description = "Login completed. The QOMO_AUTH cookie is set on the response.",
+        headers =
+            @Header(
+                name = "Set-Cookie",
+                description =
+                    "Sets the QOMO_AUTH HTTP-only authentication cookie. The cookie value is"
+                        + " sensitive and is not documented.",
+                schema = @Schema(type = "string")),
+        content = @Content()),
+    @ApiResponse(
+        responseCode = "400",
+        description = "The request body is malformed or fails validation.",
+        content =
+            @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class))),
+    @ApiResponse(
+        responseCode = "401",
+        description = "Credentials are invalid.",
+        content =
+            @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class))),
+    @ApiResponse(
+        responseCode = "403",
+        description =
+            "Login cannot be completed for the account state. When email verification is required,"
+                + " a verification-session cookie may be set.",
+        headers =
+            @Header(
+                name = "Set-Cookie",
+                description =
+                    "May set a verification-session cookie so the browser can continue the"
+                        + " email-verification flow. No authentication cookie is issued.",
+                schema = @Schema(type = "string")),
+        content =
+            @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class)))
   })
   @PostMapping("/login")
   public ResponseEntity<?> login(
       @io.swagger.v3.oas.annotations.parameters.RequestBody(
-          description = "Credentials submitted for browser login.",
-          required = true,
-          content =
-          @Content(
-              mediaType = "application/json",
-              schema = @Schema(implementation = LoginRequest.class)))
-      @Valid
-      @RequestBody
-      LoginRequest request) {
+              description = "Credentials submitted for browser login.",
+              required = true,
+              content =
+                  @Content(
+                      mediaType = "application/json",
+                      schema = @Schema(implementation = LoginRequest.class)))
+          @Valid
+          @RequestBody
+          LoginRequest request) {
     var result = loginUseCase.login(new LoginUseCase.Command(request.email(), request.password()));
 
     if (result.emailNotVerified()) {
@@ -282,26 +278,26 @@ public class AuthController {
               + " the same cookie attributes as login with Max-Age=0.",
       security = @SecurityRequirement(name = "qomoAuthCookie"))
   @ApiResponses({
-      @ApiResponse(
-          responseCode = "204",
-          description = "Logout completed. The QOMO_AUTH cookie is expired on the response.",
-          headers =
-          @Header(
-              name = "Set-Cookie",
-              description = "Expires the QOMO_AUTH HTTP-only authentication cookie.",
-              schema = @Schema(type = "string")),
-          content = @Content()),
-      @ApiResponse(
-          responseCode = "401",
-          description = "Authentication requirements are not satisfied.",
-          content = @Content()),
-      @ApiResponse(
-          responseCode = "403",
-          description = "Authentication or CSRF requirements are not satisfied.",
-          content =
-          @Content(
-              mediaType = "application/problem+json",
-              schema = @Schema(implementation = ProblemDetail.class)))
+    @ApiResponse(
+        responseCode = "204",
+        description = "Logout completed. The QOMO_AUTH cookie is expired on the response.",
+        headers =
+            @Header(
+                name = "Set-Cookie",
+                description = "Expires the QOMO_AUTH HTTP-only authentication cookie.",
+                schema = @Schema(type = "string")),
+        content = @Content()),
+    @ApiResponse(
+        responseCode = "401",
+        description = "Authentication requirements are not satisfied.",
+        content = @Content()),
+    @ApiResponse(
+        responseCode = "403",
+        description = "Authentication or CSRF requirements are not satisfied.",
+        content =
+            @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class)))
   })
   @PostMapping("/logout")
   public ResponseEntity<Void> logout() {
@@ -333,65 +329,63 @@ public class AuthController {
               + " verified accounts return ALREADY_REGISTERED so the client can route users to"
               + " login.")
   @ApiResponses({
-      @ApiResponse(
-          responseCode = "202",
-          description =
-              "Registration request accepted; verification is required. This response covers both"
-                  + " new accounts and existing unverified accounts.",
-          headers =
-          @Header(
-              name = "Set-Cookie",
-              description =
-                  "May set a verification-session HTTP-only cookie. The cookie value is"
-                      + " sensitive and is not documented.",
-              schema = @Schema(type = "string")),
-          content =
-          @Content(
-              mediaType = "application/json",
-              schema = @Schema(implementation = RegistrationAcceptedResponse.class))),
-      @ApiResponse(
-          responseCode = "400",
-          description = "The request body is malformed or fails validation.",
-          content =
-          @Content(
-              mediaType = "application/problem+json",
-              schema = @Schema(implementation = ProblemDetail.class))),
-      @ApiResponse(
-          responseCode = "409",
-          description = "The submitted email belongs to an already verified account.",
-          content =
-          @Content(
-              mediaType = "application/json",
-              schema = @Schema(implementation = RegistrationAcceptedResponse.class)))
+    @ApiResponse(
+        responseCode = "202",
+        description =
+            "Registration request accepted with VERIFICATION_REQUIRED. This response covers"
+                + " both new accounts and existing unverified accounts.",
+        headers =
+            @Header(
+                name = "Set-Cookie",
+                description =
+                    "May set a verification-session HTTP-only cookie. The cookie value is"
+                        + " sensitive and is not documented.",
+                schema = @Schema(type = "string")),
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = RegistrationAcceptedResponse.class))),
+    @ApiResponse(
+        responseCode = "400",
+        description = "The request body is malformed or fails validation.",
+        content =
+            @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class))),
+    @ApiResponse(
+        responseCode = "409",
+        description =
+            "The submitted email belongs to an already verified account; returns"
+                + " ALREADY_REGISTERED.",
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = RegistrationAcceptedResponse.class)))
   })
   @PostMapping("/register")
   public ResponseEntity<RegistrationAcceptedResponse> register(
       @io.swagger.v3.oas.annotations.parameters.RequestBody(
-          description = "Registration data submitted by the browser client.",
-          required = true,
-          content =
-          @Content(
-              mediaType = "application/json",
-              schema = @Schema(implementation = RegisterRequest.class)))
-      @Valid
-      @RequestBody
-      RegisterRequest request) {
+              description = "Registration data submitted by the browser client.",
+              required = true,
+              content =
+                  @Content(
+                      mediaType = "application/json",
+                      schema = @Schema(implementation = RegisterRequest.class)))
+          @Valid
+          @RequestBody
+          RegisterRequest request) {
 
     var result =
         registerUserUseCase.register(
             new RegisterUserUseCase.Command(request.email(), request.password()));
 
     if (result.status() == RegisterUserUseCase.RegistrationStatus.ALREADY_REGISTERED) {
-      var body =
-          new RegistrationAcceptedResponse(
-              result.requestId(), Status.ALREADY_REGISTERED, ALREADY_REGISTERED_MESSAGE);
+      var body = new RegistrationAcceptedResponse(Status.ALREADY_REGISTERED);
       return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
     // The body stays generic for new and existing-unverified accounts.
-    var body =
-        new RegistrationAcceptedResponse(
-            result.requestId(), Status.VERIFICATION_REQUIRED, REGISTRATION_ACCEPTED_MESSAGE);
+    var body = new RegistrationAcceptedResponse(Status.VERIFICATION_REQUIRED);
     if (result.verificationSessionId() == null) {
       return ResponseEntity.accepted().body(body);
     }
@@ -427,13 +421,13 @@ public class AuthController {
       responseCode = "200",
       description = "CSRF token metadata for browser clients.",
       content =
-      @Content(
-          mediaType = "application/json",
-          schema =
-          @Schema(
-              implementation = Map.class,
-              description =
-                  "Object containing headerName, parameterName, and token fields.")))
+          @Content(
+              mediaType = "application/json",
+              schema =
+                  @Schema(
+                      implementation = Map.class,
+                      description =
+                          "Object containing headerName, parameterName, and token fields.")))
   @GetMapping("/csrf")
   public ResponseEntity<Map<String, String>> csrf(CsrfToken csrfToken) {
     return ResponseEntity.ok(

@@ -218,10 +218,7 @@ class AuthVerifyHttpContractTest {
                             {"email":"new@example.com","password":"s3cret"}
                             """))
             .andExpect(status().isAccepted())
-            .andExpect(jsonPath("$.requestId").value("req-123"))
-            .andExpect(jsonPath("$.status").value("VERIFICATION_REQUIRED"))
-            .andExpect(
-                jsonPath("$.message").value("If the email is valid, you'll receive next steps."))
+            .andExpect(content().string("{\"status\":\"VERIFICATION_REQUIRED\"}"))
             .andReturn()
             .getResponse();
 
@@ -230,6 +227,56 @@ class AuthVerifyHttpContractTest {
     Assertions.assertTrue(
         setCookie.contains("QOMO_VERIF_TEST=bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"));
     Assertions.assertTrue(setCookie.contains("Max-Age=300"));
+  }
+
+  @Test
+  void register_shouldReturnSameAcceptedBodyForNewAndExistingUnverifiedEmails() throws Exception {
+    when(registerUserUseCase.register(any()))
+        .thenReturn(
+            new RegisterUserUseCase.Result(
+                "req-new",
+                RegistrationStatus.VERIFICATION_REQUIRED,
+                UUID.fromString("aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"),
+                300))
+        .thenReturn(
+            new RegisterUserUseCase.Result(
+                "req-existing-unverified",
+                RegistrationStatus.VERIFICATION_REQUIRED,
+                UUID.fromString("ffffffff-eeee-4ddd-8ccc-bbbbbbbbbbbb"),
+                300));
+
+    var newEmailResponse =
+        mockMvc
+            .perform(
+                post("/v1/auth/register")
+                    .contentType("application/json")
+                    .content(
+                        """
+                            {"email":"new@example.com","password":"s3cret"}
+                            """))
+            .andExpect(status().isAccepted())
+            .andExpect(content().string("{\"status\":\"VERIFICATION_REQUIRED\"}"))
+            .andExpect(header().exists(HttpHeaders.SET_COOKIE))
+            .andReturn()
+            .getResponse();
+
+    var existingUnverifiedResponse =
+        mockMvc
+            .perform(
+                post("/v1/auth/register")
+                    .contentType("application/json")
+                    .content(
+                        """
+                            {"email":"existing-unverified@example.com","password":"s3cret"}
+                            """))
+            .andExpect(status().isAccepted())
+            .andExpect(content().string("{\"status\":\"VERIFICATION_REQUIRED\"}"))
+            .andExpect(header().exists(HttpHeaders.SET_COOKIE))
+            .andReturn()
+            .getResponse();
+
+    Assertions.assertEquals(
+        newEmailResponse.getContentAsString(), existingUnverifiedResponse.getContentAsString());
   }
 
   @Test
@@ -248,9 +295,7 @@ class AuthVerifyHttpContractTest {
                         {"email":"used@example.com","password":"s3cret"}
                         """))
         .andExpect(status().isConflict())
-        .andExpect(jsonPath("$.requestId").value("req-registered"))
-        .andExpect(jsonPath("$.status").value("ALREADY_REGISTERED"))
-        .andExpect(jsonPath("$.message").value("Account already registered. Please sign in."))
+        .andExpect(content().string("{\"status\":\"ALREADY_REGISTERED\"}"))
         .andExpect(header().doesNotExist(HttpHeaders.SET_COOKIE));
   }
 
@@ -269,10 +314,7 @@ class AuthVerifyHttpContractTest {
                         {"email":"used@example.com","password":"s3cret"}
                         """))
         .andExpect(status().isConflict())
-        .andExpect(jsonPath("$.requestId").isString())
-        .andExpect(jsonPath("$.status").value("ALREADY_REGISTERED"))
-        .andExpect(jsonPath("$.message").value("Account already registered. Please sign in."))
-        .andExpect(jsonPath("$.title").doesNotExist());
+        .andExpect(content().string("{\"status\":\"ALREADY_REGISTERED\"}"));
   }
 
   @Test

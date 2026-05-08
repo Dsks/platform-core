@@ -60,9 +60,8 @@ public class UserController {
    *
    * <p>The endpoint expects a JSON body with email, password, and caller-supplied role names, then
    * returns {@code 202 Accepted} with a generic acknowledgement after the create command returns
-   * successfully. The generated request id is not a user id. Existing-email conflicts, validation
-   * failures, and malformed JSON are delegated to the global exception handler. No cookies are read
-   * or written.
+   * successfully. Existing-email conflicts, validation failures, and malformed JSON are delegated
+   * to the global exception handler. No cookies are read or written.
    *
    * @param request validated user-creation body
    * @return generic accepted response after the create command succeeds
@@ -129,11 +128,7 @@ public class UserController {
     createUser.create(
         new CreateUserUseCase.Command(request.email(), request.password(), request.roles()));
 
-    var body =
-        new RegistrationAcceptedResponse(
-            java.util.UUID.randomUUID().toString(),
-            Status.VERIFICATION_REQUIRED,
-            "If the email is valid, you'll receive next steps.");
+    var body = new RegistrationAcceptedResponse(Status.VERIFICATION_REQUIRED);
 
     return ResponseEntity.accepted().body(body);
   }

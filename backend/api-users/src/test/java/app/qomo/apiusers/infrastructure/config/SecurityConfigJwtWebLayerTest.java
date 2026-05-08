@@ -50,7 +50,7 @@ class SecurityConfigJwtWebLayerTest {
 
   @Autowired private MockMvc mockMvc;
 
-  @Autowired private ObjectMapper objectMapper;
+  private final ObjectMapper objectMapper = new ObjectMapper();
 
   @MockitoBean private LoginUseCase loginUseCase;
   @MockitoBean private RegisterUserUseCase registerUserUseCase;
@@ -150,15 +150,32 @@ class SecurityConfigJwtWebLayerTest {
 
     Assertions.assertNotNull(csrfCookie);
 
-    mockMvc
-        .perform(
-            post("/v1/auth/logout")
-                .header(csrfJson.get("headerName").asText(), csrfJson.get("token").asText())
-                .cookie(csrfCookie)
-                .cookie(new Cookie(AuthController.AUTH_COOKIE_NAME, "logout-jwt")))
-        .andExpect(status().isNoContent())
-        .andExpect(header().string(HttpHeaders.SET_COOKIE, Matchers.containsString("QOMO_AUTH=")))
-        .andExpect(header().string(HttpHeaders.SET_COOKIE, Matchers.containsString("Max-Age=0")));
+    var logoutResponse =
+        mockMvc
+            .perform(
+                post("/v1/auth/logout")
+                    .header(csrfJson.get("headerName").asText(), csrfJson.get("token").asText())
+                    .cookie(csrfCookie)
+                    .cookie(new Cookie(AuthController.AUTH_COOKIE_NAME, "logout-jwt")))
+            .andExpect(status().isNoContent())
+            .andReturn()
+            .getResponse();
+
+    var setCookies = logoutResponse.getHeaders(HttpHeaders.SET_COOKIE);
+    Assertions.assertTrue(
+        setCookies.stream()
+            .anyMatch(
+                cookie ->
+                    cookie.startsWith("QOMO_AUTH=")
+                        && cookie.contains("Max-Age=0")
+                        && cookie.contains("Path=/")));
+    Assertions.assertTrue(
+        setCookies.stream()
+            .anyMatch(
+                cookie ->
+                    cookie.startsWith("XSRF-TOKEN=")
+                        && cookie.contains("Max-Age=0")
+                        && cookie.contains("Path=/")));
   }
 
   @Test
