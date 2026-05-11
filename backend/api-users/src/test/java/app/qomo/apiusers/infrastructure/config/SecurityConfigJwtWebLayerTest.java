@@ -6,7 +6,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -14,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import app.qomo.apiusers.application.port.in.CreateUserUseCase;
+import app.qomo.apiusers.application.port.in.DeleteUserUseCase;
 import app.qomo.apiusers.application.port.in.GetCurrentUserUseCase;
 import app.qomo.apiusers.application.port.in.GetUserUseCase;
 import app.qomo.apiusers.application.port.in.LoginUseCase;
@@ -22,7 +25,13 @@ import app.qomo.apiusers.application.port.in.ResendEmailVerificationUseCase;
 import app.qomo.apiusers.application.port.in.VerifyEmailUseCase;
 import app.qomo.apiusers.application.port.out.ClockPort;
 import app.qomo.apiusers.application.port.out.JwtTokenProviderPort;
+import app.qomo.apiusers.domain.model.Email;
+import app.qomo.apiusers.domain.model.PasswordHash;
+import app.qomo.apiusers.domain.model.Role;
+import app.qomo.apiusers.domain.model.RoleId;
+import app.qomo.apiusers.domain.model.User;
 import app.qomo.apiusers.domain.model.UserId;
+import app.qomo.apiusers.infrastructure.adapter.in.web.ApiExceptionHandler;
 import app.qomo.apiusers.infrastructure.adapter.in.web.AuthController;
 import app.qomo.apiusers.infrastructure.adapter.in.web.UserController;
 import app.qomo.apiusers.infrastructure.adapter.in.web.VerifyEmailController;
@@ -31,24 +40,34 @@ import jakarta.servlet.http.Cookie;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRepository;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(controllers = {AuthController.class, UserController.class, VerifyEmailController.class})
-@Import(SecurityConfig.class)
+@SpringBootTest(classes = SecurityConfigJwtWebLayerTest.TestApplication.class)
+@AutoConfigureMockMvc
 class SecurityConfigJwtWebLayerTest {
 
   @Autowired private MockMvc mockMvc;
+  @Autowired private ApplicationContext applicationContext;
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -57,11 +76,26 @@ class SecurityConfigJwtWebLayerTest {
   @MockitoBean private GetCurrentUserUseCase getCurrentUserUseCase;
   @MockitoBean private CreateUserUseCase createUserUseCase;
   @MockitoBean private GetUserUseCase getUserUseCase;
+  @MockitoBean private DeleteUserUseCase deleteUserUseCase;
   @MockitoBean private VerifyEmailUseCase verifyEmailUseCase;
   @MockitoBean private ResendEmailVerificationUseCase resendEmailVerificationUseCase;
 
   @MockitoBean private JwtTokenProviderPort jwtTokenProviderPort;
   @MockitoBean private ClockPort clockPort;
+
+  @Test
+  void csrfTokenRepositoryBeanIsCookieBacked() {
+    Assertions.assertInstanceOf(
+        CookieCsrfTokenRepository.class, applicationContext.getBean(CsrfTokenRepository.class));
+  }
+
+  @Test
+  void securityFilterChainComesFromSecurityConfig() {
+    var chains = applicationContext.getBeansOfType(SecurityFilterChain.class);
+
+    Assertions.assertEquals(1, chains.size());
+    Assertions.assertTrue(chains.containsKey("securityFilterChain"));
+  }
 
   @Test
   void csrfEndpointIsPublic() throws Exception {
@@ -131,6 +165,7 @@ class SecurityConfigJwtWebLayerTest {
   }
 
   @Test
+  @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
   void logoutRouteAcceptsTokenReturnedByCsrfEndpoint() throws Exception {
     when(clockPort.now()).thenReturn(Instant.parse("2026-03-26T10:15:30Z"));
     when(jwtTokenProviderPort.validate(eq("logout-jwt"), any(Instant.class))).thenReturn(true);
@@ -138,30 +173,52 @@ class SecurityConfigJwtWebLayerTest {
         .thenReturn("33333333-3333-4333-8333-333333333333");
     when(jwtTokenProviderPort.roles("logout-jwt")).thenReturn(Set.of("USER"));
 
-    var csrfResponse =
+    var csrfResult =
         mockMvc
-            .perform(get("/v1/auth/csrf"))
+            .perform(get("/v1/auth/csrf").secure(true))
             .andExpect(status().isOk())
             .andExpect(header().exists(HttpHeaders.SET_COOKIE))
-            .andReturn()
-            .getResponse();
+            .andExpect(
+                header().string(HttpHeaders.SET_COOKIE, Matchers.containsString("XSRF-TOKEN=")))
+            .andExpect(jsonPath("$.headerName").value("X-XSRF-TOKEN"))
+            .andExpect(jsonPath("$.parameterName").value("_csrf"))
+            .andExpect(jsonPath("$.token", Matchers.not(Matchers.isEmptyOrNullString())))
+            .andReturn();
+
+    var csrfResponse = csrfResult.getResponse();
     var csrfJson = objectMapper.readTree(csrfResponse.getContentAsString());
     Cookie csrfCookie = csrfResponse.getCookie("XSRF-TOKEN");
+    var session = csrfResult.getRequest().getSession(false);
 
     Assertions.assertNotNull(csrfCookie);
+    if (session != null) {
+      Assertions.assertNull(
+          session.getAttribute(
+              "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN"));
+    }
+
+    Cookie postCsrfCookie = new Cookie("XSRF-TOKEN", csrfJson.get("token").asText());
+    postCsrfCookie.setPath("/");
+    postCsrfCookie.setSecure(csrfCookie.getSecure());
+
+    Cookie authCookie = new Cookie(AuthController.AUTH_COOKIE_NAME, "logout-jwt");
+    authCookie.setPath("/");
+    authCookie.setHttpOnly(true);
+    authCookie.setSecure(true);
 
     var logoutResponse =
         mockMvc
             .perform(
                 post("/v1/auth/logout")
+                    .secure(true)
                     .header(csrfJson.get("headerName").asText(), csrfJson.get("token").asText())
-                    .cookie(csrfCookie)
-                    .cookie(new Cookie(AuthController.AUTH_COOKIE_NAME, "logout-jwt")))
+                    .cookie(postCsrfCookie, authCookie))
             .andExpect(status().isNoContent())
             .andReturn()
             .getResponse();
 
     var setCookies = logoutResponse.getHeaders(HttpHeaders.SET_COOKIE);
+
     Assertions.assertTrue(
         setCookies.stream()
             .anyMatch(
@@ -169,6 +226,7 @@ class SecurityConfigJwtWebLayerTest {
                     cookie.startsWith("QOMO_AUTH=")
                         && cookie.contains("Max-Age=0")
                         && cookie.contains("Path=/")));
+
     Assertions.assertTrue(
         setCookies.stream()
             .anyMatch(
@@ -176,6 +234,8 @@ class SecurityConfigJwtWebLayerTest {
                     cookie.startsWith("XSRF-TOKEN=")
                         && cookie.contains("Max-Age=0")
                         && cookie.contains("Path=/")));
+
+    verify(jwtTokenProviderPort).validate(eq("logout-jwt"), any(Instant.class));
   }
 
   @Test
@@ -310,4 +370,174 @@ class SecurityConfigJwtWebLayerTest {
                 .cookie(new Cookie(AuthController.AUTH_COOKIE_NAME, "admin-jwt")))
         .andExpect(status().isAccepted());
   }
+
+  @Test
+  void updateUserEndpointForbidsAnonymousRequest() throws Exception {
+    mockMvc
+        .perform(
+            patch("/v1/users/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"active\":false}"))
+        .andExpect(status().isForbidden());
+
+    verify(getUserUseCase, never()).update(any());
+  }
+
+  @Test
+  void updateUserEndpointForbidsAuthenticatedUserRole() throws Exception {
+    authenticateAs("patch-user-jwt", "USER");
+
+    mockMvc
+        .perform(
+            patch("/v1/users/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"active\":false}")
+                .cookie(new Cookie(AuthController.AUTH_COOKIE_NAME, "patch-user-jwt")))
+        .andExpect(status().isForbidden());
+
+    verify(getUserUseCase, never()).update(any());
+  }
+
+  @Test
+  void updateUserEndpointRequiresCsrfForAdmin() throws Exception {
+    authenticateAs("patch-admin-missing-csrf-jwt", "ADMIN");
+
+    mockMvc
+        .perform(
+            patch("/v1/users/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"active\":false}")
+                .cookie(
+                    new Cookie(AuthController.AUTH_COOKIE_NAME, "patch-admin-missing-csrf-jwt")))
+        .andExpect(status().isForbidden());
+
+    verify(getUserUseCase, never()).update(any());
+  }
+
+  @Test
+  void updateUserEndpointAllowsAdminAndReturnsSafeUserResponse() throws Exception {
+    authenticateAs("patch-admin-jwt", "ADMIN");
+    when(getUserUseCase.update(any()))
+        .thenReturn(
+            user(
+                "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                false,
+                Role.user(roleId("99999999-9999-4999-8999-999999999999"))));
+
+    mockMvc
+        .perform(
+            patch("/v1/users/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"active\":false}")
+                .cookie(new Cookie(AuthController.AUTH_COOKIE_NAME, "patch-admin-jwt")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"))
+        .andExpect(jsonPath("$.isActive").value(false))
+        .andExpect(jsonPath("$.roles", Matchers.containsInAnyOrder("USER")))
+        .andExpect(jsonPath("$.password").doesNotExist())
+        .andExpect(jsonPath("$.passwordHash").doesNotExist())
+        .andExpect(jsonPath("$.token").doesNotExist())
+        .andExpect(jsonPath("$.tokens").doesNotExist())
+        .andExpect(jsonPath("$.secret").doesNotExist())
+        .andExpect(jsonPath("$.secrets").doesNotExist());
+  }
+
+  @Test
+  void deleteUserEndpointForbidsAnonymousRequest() throws Exception {
+    mockMvc
+        .perform(delete("/v1/users/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa").with(csrf()))
+        .andExpect(status().isForbidden());
+
+    verify(deleteUserUseCase, never()).delete(any());
+  }
+
+  @Test
+  void deleteUserEndpointForbidsAuthenticatedUserRole() throws Exception {
+    authenticateAs("delete-user-jwt", "USER");
+
+    mockMvc
+        .perform(
+            delete("/v1/users/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
+                .with(csrf())
+                .cookie(new Cookie(AuthController.AUTH_COOKIE_NAME, "delete-user-jwt")))
+        .andExpect(status().isForbidden());
+
+    verify(deleteUserUseCase, never()).delete(any());
+  }
+
+  @Test
+  void deleteUserEndpointAllowsAdminWithCsrf() throws Exception {
+    authenticateAs("delete-admin-jwt", "ADMIN");
+
+    mockMvc
+        .perform(
+            delete("/v1/users/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
+                .with(csrf())
+                .cookie(new Cookie(AuthController.AUTH_COOKIE_NAME, "delete-admin-jwt")))
+        .andExpect(status().isNoContent());
+
+    verify(deleteUserUseCase)
+        .delete(
+            new DeleteUserUseCase.Command(
+                UserId.of("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"),
+                UserId.of("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"),
+                Set.of("ADMIN")));
+  }
+
+  @Test
+  void deleteUserEndpointRequiresCsrfForAdmin() throws Exception {
+    authenticateAs("delete-admin-missing-csrf-jwt", "ADMIN");
+
+    mockMvc
+        .perform(
+            delete("/v1/users/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
+                .cookie(
+                    new Cookie(AuthController.AUTH_COOKIE_NAME, "delete-admin-missing-csrf-jwt")))
+        .andExpect(status().isForbidden());
+
+    verify(deleteUserUseCase, never()).delete(any());
+  }
+
+  private void authenticateAs(String token, String role) {
+    when(clockPort.now()).thenReturn(Instant.parse("2026-03-26T10:15:30Z"));
+    when(jwtTokenProviderPort.validate(eq(token), any(Instant.class))).thenReturn(true);
+    when(jwtTokenProviderPort.subject(token)).thenReturn("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb");
+    when(jwtTokenProviderPort.roles(token)).thenReturn(Set.of(role));
+  }
+
+  private User user(String id, boolean active, Role role) {
+    return User.restore(
+        UserId.of(id),
+        Email.of("target@example.com"),
+        new PasswordHash("hashed-password"),
+        active,
+        true,
+        null,
+        Instant.parse("2026-03-25T12:30:00Z"),
+        Instant.parse("2026-03-26T12:30:00Z"),
+        null,
+        Set.of(role));
+  }
+
+  private RoleId roleId(String raw) {
+    return new RoleId(UUID.fromString(raw));
+  }
+
+  @Configuration(proxyBeanMethods = false)
+  @EnableAutoConfiguration(
+      excludeName = {
+        "org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration",
+        "org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration"
+      })
+  @Import({
+    SecurityConfig.class,
+    ApiExceptionHandler.class,
+    AuthController.class,
+    UserController.class,
+    VerifyEmailController.class
+  })
+  static class TestApplication {}
 }

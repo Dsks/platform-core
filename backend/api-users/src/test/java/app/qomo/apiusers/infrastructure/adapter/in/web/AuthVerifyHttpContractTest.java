@@ -35,6 +35,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
+import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -66,6 +67,8 @@ class AuthVerifyHttpContractTest {
   @MockitoBean private ResendEmailVerificationUseCase resendEmailVerificationUseCase;
 
   @MockitoBean private JwtTokenProviderPort jwtTokenProvider;
+
+  @MockitoBean private CsrfTokenRepository csrfTokenRepository;
 
   @MockitoBean private ClockPort clock;
 

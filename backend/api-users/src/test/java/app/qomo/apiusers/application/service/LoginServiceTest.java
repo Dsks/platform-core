@@ -95,7 +95,7 @@ class LoginServiceTest {
 
   @Test
   void login_shouldThrowInvalidCredentials_whenPasswordDoesNotMatch() {
-    var user = restoredUser(true, true, null, Instant.parse("2026-03-01T00:00:00Z"));
+    var user = restoredUser(true, true, null, Instant.parse("2026-03-01T00:00:00Z"), null);
     var command = new LoginUseCase.Command(RAW_EMAIL, RAW_PASSWORD);
     when(userRepository.findByEmail(NORMALIZED_EMAIL)).thenReturn(Optional.of(user));
     when(passwordVerifier.matches(RAW_PASSWORD, user.passwordHash())).thenReturn(false);
@@ -109,7 +109,7 @@ class LoginServiceTest {
 
   @Test
   void login_shouldThrowUserInactive_whenCredentialsAreValidButAccountIsInactive() {
-    var inactiveUser = restoredUser(false, true, null, Instant.parse("2026-03-15T00:00:00Z"));
+    var inactiveUser = restoredUser(false, true, null, Instant.parse("2026-03-15T00:00:00Z"), null);
     var command = new LoginUseCase.Command(RAW_EMAIL, RAW_PASSWORD);
     when(userRepository.findByEmail(NORMALIZED_EMAIL)).thenReturn(Optional.of(inactiveUser));
     when(passwordVerifier.matches(RAW_PASSWORD, inactiveUser.passwordHash())).thenReturn(true);
@@ -124,7 +124,8 @@ class LoginServiceTest {
 
   @Test
   void login_shouldTriggerVerificationFlowAndSkipLastLoginUpdate_whenUserIsUnverified() {
-    var unverifiedUser = restoredUser(true, false, null, Instant.parse("2026-03-05T00:00:00Z"));
+    var unverifiedUser =
+        restoredUser(true, false, null, Instant.parse("2026-03-05T00:00:00Z"), null);
     var issuedSessionId = UUID.fromString("12345678-1234-4234-8234-123456789abc");
     var command = new LoginUseCase.Command(RAW_EMAIL, RAW_PASSWORD);
 
@@ -157,7 +158,7 @@ class LoginServiceTest {
   void login_shouldReturnVerifiedUserAndUpdateLastLogin_whenCredentialsAreValidAndUserVerified() {
     var previousLogin = Instant.parse("2026-03-10T12:30:00Z");
     var verifiedUser =
-        restoredUser(true, true, previousLogin, Instant.parse("2026-03-20T00:00:00Z"));
+        restoredUser(true, true, previousLogin, Instant.parse("2026-03-20T00:00:00Z"), null);
     var command = new LoginUseCase.Command(RAW_EMAIL, RAW_PASSWORD);
 
     when(userRepository.findByEmail(NORMALIZED_EMAIL)).thenReturn(Optional.of(verifiedUser));
@@ -179,7 +180,8 @@ class LoginServiceTest {
 
   @Test
   void login_shouldPropagateRateLimitedVerificationSemantics_whenIssueServiceDoesNotIssue() {
-    var unverifiedUser = restoredUser(true, false, null, Instant.parse("2026-03-05T00:00:00Z"));
+    var unverifiedUser =
+        restoredUser(true, false, null, Instant.parse("2026-03-05T00:00:00Z"), null);
     var command = new LoginUseCase.Command(RAW_EMAIL, RAW_PASSWORD);
 
     when(userRepository.findByEmail(NORMALIZED_EMAIL)).thenReturn(Optional.of(unverifiedUser));
@@ -204,7 +206,7 @@ class LoginServiceTest {
   }
 
   private static User restoredUser(
-      boolean active, boolean verified, Instant lastLogin, Instant updatedAt) {
+      boolean active, boolean verified, Instant lastLogin, Instant updatedAt, Instant deletedAt) {
     return User.restore(
         new UserId(UUID.fromString("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")),
         new Email(NORMALIZED_EMAIL),
@@ -214,6 +216,7 @@ class LoginServiceTest {
         lastLogin,
         Instant.parse("2026-02-01T00:00:00Z"),
         updatedAt,
+        deletedAt,
         Set.of(Role.user(new RoleId(UUID.fromString("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb")))));
   }
 }

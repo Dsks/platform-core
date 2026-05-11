@@ -6,6 +6,7 @@ CREATE TABLE auth_users (
         is_verified BOOLEAN NOT NULL,
         last_login TIMESTAMPTZ NULL,
         created_at TIMESTAMPTZ NOT NULL,
+        deleted_at TIMESTAMPTZ NULL,
         updated_at TIMESTAMPTZ NOT NULL
     );
 
@@ -54,15 +55,15 @@ CREATE TABLE auth_users (
     );
 
     INSERT INTO auth_roles (id, name)
-    VALUES ('00000000-0000-0000-0000-000000000001', 'SUPERADMIN')
+    VALUES ('00000000-0000-4000-8000-000000000001', 'SUPERADMIN')
     ON CONFLICT (name) DO NOTHING;
 
     INSERT INTO auth_roles (id, name)
-    VALUES ('00000000-0000-0000-0000-000000000002', 'ADMIN')
+    VALUES ('00000000-0000-4000-8000-000000000002', 'ADMIN')
     ON CONFLICT (name) DO NOTHING;
 
     INSERT INTO auth_roles (id, name)
-    VALUES ('00000000-0000-0000-0000-000000000003', 'USER')
+    VALUES ('00000000-0000-4000-8000-000000000003', 'USER')
     ON CONFLICT (name) DO NOTHING;
 
     CREATE INDEX idx_auth_users_email ON auth_users(email);

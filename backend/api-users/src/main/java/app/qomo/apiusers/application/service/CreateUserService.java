@@ -118,6 +118,8 @@ public class CreateUserService implements CreateUserUseCase {
       user.addRole(role, now);
     }
 
+    user.verify(now);
+
     var saved = userRepository.save(user);
     // Publish after persistence so consumers observe a durable user id.
     eventPublisher.userCreated(saved);

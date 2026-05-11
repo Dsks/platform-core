@@ -2,14 +2,19 @@ package app.qomo.apiusers.infrastructure.config;
 
 import app.qomo.apiusers.application.port.out.ClockPort;
 import app.qomo.apiusers.application.port.out.JwtTokenProviderPort;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
@@ -93,6 +98,15 @@ public class SecurityConfig {
   }
 
   /**
+   * Writes the same problem-detail shape used by controller exceptions when authorization fails
+   * inside Spring Security before a request reaches a controller.
+   */
+  @Bean
+  public AccessDeniedHandler accessDeniedHandler() {
+    return (request, response, accessDeniedException) -> writeForbiddenProblem(response);
+  }
+
+  /**
    * Builds the HTTP authorization chain for the users API.
    *
    * <p>Login, registration, CSRF token retrieval, email verification, verification resend, health
@@ -104,17 +118,18 @@ public class SecurityConfig {
    *
    * @param http Spring Security builder supplied by the framework
    * @param jwtFilter filter that extracts and validates the JWT auth cookie
-   * @param csrfTokenRepository CSRF repository with runtime cookie attributes
    */
   @Bean
   public SecurityFilterChain securityFilterChain(
       HttpSecurity http,
       JwtCookieAuthFilter jwtFilter,
+      AccessDeniedHandler accessDeniedHandler,
       CsrfTokenRepository csrfTokenRepository,
       CsrfTokenRequestAttributeHandler csrfTokenRequestHandler)
       throws Exception {
     // CSRF stays active for protected browser writes; only pre-auth flows are exempted.
-    http.csrf(
+    http.exceptionHandling(exception -> exception.accessDeniedHandler(accessDeniedHandler))
+        .csrf(
             csrf ->
                 csrf.csrfTokenRepository(csrfTokenRepository)
                     .csrfTokenRequestHandler(csrfTokenRequestHandler)
@@ -152,11 +167,30 @@ public class SecurityConfig {
                     .authenticated()
                     .requestMatchers(HttpMethod.POST, "/v1/users")
                     .hasAnyRole("ADMIN", "SUPERADMIN")
+                    .requestMatchers(HttpMethod.GET, "/v1/users")
+                    .hasAnyRole("ADMIN", "SUPERADMIN")
+                    .requestMatchers(HttpMethod.PATCH, "/v1/users/*")
+                    .hasAnyRole("ADMIN", "SUPERADMIN")
+                    .requestMatchers(HttpMethod.DELETE, "/v1/users/*")
+                    .hasAnyRole("ADMIN", "SUPERADMIN")
                     .requestMatchers("/v1/users/**")
                     .authenticated()
                     .anyRequest()
                     .authenticated())
         .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
     return http.build();
+  }
+
+  private void writeForbiddenProblem(HttpServletResponse response) throws IOException {
+    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+    response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+    response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
+    response
+        .getWriter()
+        .write(
+            "{\"type\":\"https://qomo.app/problems/FORBIDDEN_OPERATION\","
+                + "\"title\":\"FORBIDDEN_OPERATION\","
+                + "\"status\":403,"
+                + "\"detail\":\"Forbidden\"}");
   }
 }

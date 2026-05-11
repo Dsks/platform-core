@@ -1,8 +1,11 @@
 package app.qomo.apiusers.infrastructure.adapter.in.web;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -14,6 +17,7 @@ import app.qomo.apiusers.application.exception.ForbiddenOperationException;
 import app.qomo.apiusers.application.exception.InvalidCommandException;
 import app.qomo.apiusers.application.exception.UserNotFoundException;
 import app.qomo.apiusers.application.port.in.CreateUserUseCase;
+import app.qomo.apiusers.application.port.in.DeleteUserUseCase;
 import app.qomo.apiusers.application.port.in.GetCurrentUserUseCase;
 import app.qomo.apiusers.application.port.in.GetUserUseCase;
 import app.qomo.apiusers.application.port.in.LoginUseCase;
@@ -27,6 +31,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -47,7 +52,11 @@ class ApiExceptionHandlerWebContractTest {
 
   @MockitoBean private GetUserUseCase getUserUseCase;
 
+  @MockitoBean private DeleteUserUseCase deleteUserUseCase;
+
   @MockitoBean private JwtTokenProviderPort jwtTokenProvider;
+
+  @MockitoBean private CsrfTokenRepository csrfTokenRepository;
 
   @MockitoBean private ClockPort clock;
 
@@ -199,6 +208,46 @@ class ApiExceptionHandlerWebContractTest {
         .perform(get("/v1/users/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.title").value("INVALID_COMMAND"));
+  }
+
+  @Test
+  void updateUser_withEmptyBody_shouldReturnMalformedRequestProblemDetail() throws Exception {
+    mockMvc
+        .perform(
+            patch("/v1/users/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.title").value("MALFORMED_REQUEST"));
+
+    verify(getUserUseCase, never()).update(any());
+  }
+
+  @Test
+  void updateUser_withoutEditableFields_shouldReturnBadRequestProblem() throws Exception {
+    mockMvc
+        .perform(
+            patch("/v1/users/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.title").value("INVALID_COMMAND"))
+        .andExpect(jsonPath("$.params.field").value("active"));
+
+    verify(getUserUseCase, never()).update(any());
+  }
+
+  @Test
+  void updateUser_whenTargetDoesNotExist_shouldReturnNotFoundProblem() throws Exception {
+    when(getUserUseCase.update(any()))
+        .thenThrow(new UserNotFoundException("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"));
+
+    mockMvc
+        .perform(
+            patch("/v1/users/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"active\":false}"))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.title").value("USER_NOT_FOUND"));
   }
 
   private static final class UnknownApplicationException extends ApplicationException {
