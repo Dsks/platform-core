@@ -109,6 +109,7 @@ class GetCurrentUserServiceTest {
         Instant.parse("2026-03-26T10:15:30Z"),
         Instant.parse("2026-03-01T00:00:00Z"),
         Instant.parse("2026-03-26T10:15:30Z"),
+        Instant.parse("2026-03-26T10:15:30Z"),
         Set.of(Role.user(SystemRoleIds.USER)));
   }
 }

@@ -217,6 +217,7 @@ class RegisterUserServiceTest {
         null,
         Instant.parse("2026-03-01T00:00:00Z"),
         Instant.parse("2026-03-10T00:00:00Z"),
+        null,
         Set.of(Role.user(new RoleId(UUID.fromString("22222222-2222-4222-8222-222222222222")))));
   }
 }

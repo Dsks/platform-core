@@ -1,6 +1,7 @@
 package app.qomo.apiusers.infrastructure.config;
 
 import app.qomo.apiusers.application.port.in.CreateUserUseCase;
+import app.qomo.apiusers.application.port.in.DeleteUserUseCase;
 import app.qomo.apiusers.application.port.in.GetCurrentUserUseCase;
 import app.qomo.apiusers.application.port.in.GetUserUseCase;
 import app.qomo.apiusers.application.port.in.LoginUseCase;
@@ -19,6 +20,7 @@ import app.qomo.apiusers.application.port.out.UserEventPublisherPort;
 import app.qomo.apiusers.application.port.out.UserRepositoryPort;
 import app.qomo.apiusers.application.port.out.VerificationTokenRepositoryPort;
 import app.qomo.apiusers.application.service.CreateUserService;
+import app.qomo.apiusers.application.service.DeleteUserService;
 import app.qomo.apiusers.application.service.GetCurrentUserService;
 import app.qomo.apiusers.application.service.GetUserService;
 import app.qomo.apiusers.application.service.IssueEmailVerificationService;
@@ -338,10 +340,22 @@ public class UsersBeansConfig {
    * Assembles the user-read use case with the user repository port.
    *
    * @param userRepository user persistence port queried by the service
+   * @param clock shared time port used for idempotent user updates
    */
   @Bean
-  public GetUserUseCase getUserUseCase(UserRepositoryPort userRepository) {
-    return new GetUserService(userRepository);
+  public GetUserUseCase getUserUseCase(UserRepositoryPort userRepository, ClockPort clock) {
+    return new GetUserService(userRepository, clock);
+  }
+
+  /**
+   * Assembles the administrative soft-delete use case with the user repository and clock ports.
+   *
+   * @param userRepository user persistence port used to load and anonymize the target account
+   * @param clock shared time port used for deletion audit timestamps
+   */
+  @Bean
+  public DeleteUserUseCase deleteUserUseCase(UserRepositoryPort userRepository, ClockPort clock) {
+    return new DeleteUserService(userRepository, clock);
   }
 
   /**

@@ -18,6 +18,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.time.Duration;
@@ -29,6 +31,7 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -59,6 +62,7 @@ public class AuthController {
   private final RegisterUserUseCase registerUserUseCase;
   private final GetCurrentUserUseCase getCurrentUserUseCase;
   private final JwtTokenProviderPort jwtTokenProvider;
+  private final CsrfTokenRepository csrfTokenRepository;
   private final ClockPort clock;
   private final long expirationMs;
   private final boolean cookieSecure;
@@ -72,6 +76,7 @@ public class AuthController {
       RegisterUserUseCase registerUserUseCase,
       GetCurrentUserUseCase getCurrentUserUseCase,
       JwtTokenProviderPort jwtTokenProvider,
+      CsrfTokenRepository csrfTokenRepository,
       ClockPort clock,
       @Value("${qomo.security.jwt.expiration-ms:86400000}") long expirationMs,
       @Value("${qomo.security.cookie.secure:false}") boolean cookieSecure,
@@ -84,6 +89,7 @@ public class AuthController {
     this.registerUserUseCase = registerUserUseCase;
     this.getCurrentUserUseCase = getCurrentUserUseCase;
     this.jwtTokenProvider = jwtTokenProvider;
+    this.csrfTokenRepository = csrfTokenRepository;
     this.clock = clock;
     this.expirationMs = expirationMs;
     this.cookieSecure = cookieSecure;
@@ -406,9 +412,8 @@ public class AuthController {
    * calls.
    *
    * <p>The response is {@code 200 OK} with the header name, parameter name, and token value
-   * supplied by the framework. This method does not manually read or write cookies.
+   * supplied by the configured CSRF token repository.
    *
-   * @param csrfToken framework-provided token for the current request
    * @return token metadata and value for the client
    */
   @Operation(
@@ -429,7 +434,14 @@ public class AuthController {
                       description =
                           "Object containing headerName, parameterName, and token fields.")))
   @GetMapping("/csrf")
-  public ResponseEntity<Map<String, String>> csrf(CsrfToken csrfToken) {
+  public ResponseEntity<Map<String, String>> csrf(
+      HttpServletRequest request, HttpServletResponse response) {
+    CsrfToken csrfToken = csrfTokenRepository.loadToken(request);
+    if (csrfToken == null) {
+      csrfToken = csrfTokenRepository.generateToken(request);
+      csrfTokenRepository.saveToken(csrfToken, request, response);
+    }
+
     return ResponseEntity.ok(
         Map.of(
             "headerName", csrfToken.getHeaderName(),

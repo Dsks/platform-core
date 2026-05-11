@@ -23,6 +23,7 @@ public final class User {
   private Instant lastLogin;
   private final Instant createdAt;
   private Instant updatedAt;
+  private Instant deletedAt;
 
   private final Set<Role> roles = new HashSet<>();
 
@@ -71,6 +72,7 @@ public final class User {
       Instant lastLogin,
       Instant createdAt,
       Instant updatedAt,
+      Instant deletedAt,
       Set<Role> roles) {
     var user =
         new User(
@@ -79,6 +81,7 @@ public final class User {
     user.isVerified = isVerified;
     user.lastLogin = lastLogin;
     user.updatedAt = Objects.requireNonNull(updatedAt, "updatedAt cannot be null");
+    user.deletedAt = deletedAt;
     user.roles.addAll(Objects.requireNonNull(roles, "roles cannot be null"));
     return user;
   }
@@ -159,6 +162,10 @@ public final class User {
 
   public Instant updatedAt() {
     return updatedAt;
+  }
+
+  public Instant deletedAt() {
+    return deletedAt;
   }
 
   public Set<Role> roles() {

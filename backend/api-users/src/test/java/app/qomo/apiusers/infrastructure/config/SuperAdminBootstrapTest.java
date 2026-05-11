@@ -60,7 +60,7 @@ class SuperAdminBootstrapTest {
     verify(userRepository).save(userCaptor.capture());
 
     User saved = userCaptor.getValue();
-    assertThat(saved.id().toString()).isEqualTo("00000000-0000-0000-0000-000000000010");
+    assertThat(saved.id().toString()).isEqualTo("00000000-0000-4000-8000-000000000001");
     assertThat(saved.email().value()).isEqualTo(SUPERADMIN_EMAIL);
     assertThat(saved.passwordHash().value()).isEqualTo("bcrypt-hash");
     assertThat(saved.roles()).containsExactly(superAdminRole);

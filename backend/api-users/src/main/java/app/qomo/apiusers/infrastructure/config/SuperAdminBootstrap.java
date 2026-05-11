@@ -28,7 +28,7 @@ public class SuperAdminBootstrap implements ApplicationRunner {
 
   private static final Logger log = LoggerFactory.getLogger(SuperAdminBootstrap.class);
   private static final String SUPERADMIN_ROLE = "SUPERADMIN";
-  private static final String SUPERADMIN_USER_ID = "00000000-0000-0000-0000-000000000010";
+  private static final String SUPERADMIN_USER_ID = "00000000-0000-4000-8000-00000000001";
 
   private final UserRepositoryPort userRepository;
   private final RoleRepositoryPort roleRepository;
