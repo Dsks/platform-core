@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
-import { AuthApiService, CsrfTokenStore } from '@qomo/shared-api';
-import { CurrentUser } from '@qomo/shared-models';
+import { AuthApiService, CsrfTokenStore } from '@platformcore/shared-api';
+import { CurrentUser } from '@platformcore/shared-models';
 import { of, throwError } from 'rxjs';
 import { AuthService } from './auth.service';
 import { SessionStore } from './session-store';

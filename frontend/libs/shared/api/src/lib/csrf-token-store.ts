@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import type { CsrfResponse } from '@qomo/shared-models';
+import type { CsrfResponse } from '@platformcore/shared-models';
 
 @Injectable({ providedIn: 'root' })
 export class CsrfTokenStore {

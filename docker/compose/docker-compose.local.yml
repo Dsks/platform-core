@@ -1,10 +1,10 @@
-name: qomo-platform
+name: platformcore-platform
 
 services:
   # ---------- DB ----------
   postgres:
     image: postgres:16-alpine
-    container_name: qomo_postgres
+    container_name: platformcore_postgres
     restart: unless-stopped
     profiles: ["infra", "full"]
     environment:
@@ -14,9 +14,9 @@ services:
     ports:
       - "${POSTGRES_PORT}:5432"
     volumes:
-      - qomo_postgres_data:/var/lib/postgresql/data
+      - platformcore_postgres_data:/var/lib/postgresql/data
       - ../postgres/init:/docker-entrypoint-initdb.d:ro
-    networks: [qomo-network]
+    networks: [platformcore-network]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_ADMIN_USER} -d ${POSTGRES_DB}"]
       interval: 10s
@@ -26,10 +26,10 @@ services:
   # ---------- Kafka ----------
   kafka:
     image: apache/kafka:4.1.1
-    container_name: qomo_kafka
+    container_name: platformcore_kafka
     restart: unless-stopped
     profiles: ["infra", "full"]
-    networks: [qomo-network]
+    networks: [platformcore-network]
     ports:
     - "9092:9092"
     environment:
@@ -50,7 +50,7 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_NUM_PARTITIONS: 1
     volumes:
-      - qomo_kafka_data:/var/lib/kafka/data
+      - platformcore_kafka_data:/var/lib/kafka/data
     tmpfs:
       - /etc/kafka/secrets
       - /mnt/shared/config
@@ -58,21 +58,21 @@ services:
   # ---------- Mailpit (dev) ----------
   mailpit:
     image: axllent/mailpit
-    container_name: qomo_mailpit
+    container_name: platformcore_mailpit
     restart: unless-stopped
     profiles: ["infra", "full"]
     ports:
       - "${MAIL_WEB_PORT}:8025"
       - "${SPRING_MAIL_PORT}:1025"
-    networks: [qomo-network]
+    networks: [platformcore-network]
 
   # ---------- API USERS ----------
   api-users:
-    image: europe-southwest1-docker.pkg.dev/apps-ds-global/qomo-platform/api-users:${IMAGE_TAG}
+    image: europe-southwest1-docker.pkg.dev/apps-ds-global/platformcore-platform/api-users:${IMAGE_TAG}
     build:
       context: ../../backend/api-users
       dockerfile: Dockerfile
-    container_name: qomo_api_users
+    container_name: platformcore_api_users
     restart: unless-stopped
     profiles: ["users", "full"]
     depends_on:
@@ -80,7 +80,7 @@ services:
         condition: service_healthy
       kafka:
         condition: service_started
-    networks: [qomo-network]
+    networks: [platformcore-network]
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
 
@@ -99,11 +99,11 @@ services:
 
   # ---------- API CORE ----------
   api-core:
-    image: europe-southwest1-docker.pkg.dev/apps-ds-global/qomo-platform/api-core:${IMAGE_TAG}
+    image: europe-southwest1-docker.pkg.dev/apps-ds-global/platformcore-platform/api-core:${IMAGE_TAG}
     build:
       context: ../../backend/api-core
       dockerfile: Dockerfile
-    container_name: qomo_api_core
+    container_name: platformcore_api_core
     restart: unless-stopped
     profiles: ["core", "full"]
     depends_on:
@@ -111,7 +111,7 @@ services:
         condition: service_healthy
       kafka:
         condition: service_started
-    networks: [qomo-network]
+    networks: [platformcore-network]
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
 
@@ -128,11 +128,11 @@ services:
 
   # ---------- EMAIL SENDER (consumer Kafka) ----------
   email-sender:
-    image: europe-southwest1-docker.pkg.dev/apps-ds-global/qomo-platform/email-sender:${IMAGE_TAG}
+    image: europe-southwest1-docker.pkg.dev/apps-ds-global/platformcore-platform/email-sender:${IMAGE_TAG}
     build:
       context: ../../backend/email-sender
       dockerfile: Dockerfile
-    container_name: qomo_email_sender
+    container_name: platformcore_email_sender
     restart: unless-stopped
     profiles: ["email", "full"]
     depends_on:
@@ -142,7 +142,7 @@ services:
         condition: service_started
       mailpit:
         condition: service_started
-    networks: [qomo-network]
+    networks: [platformcore-network]
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
 
@@ -155,7 +155,7 @@ services:
       SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME}
       SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD}
 
-      QOMO_EMAIL_PAYLOAD_KEY_B64: ${QOMO_EMAIL_PAYLOAD_KEY_B64}
+      PLATFORMCORE_EMAIL_PAYLOAD_KEY_B64: ${PLATFORMCORE_EMAIL_PAYLOAD_KEY_B64}
 
       HOST: ${HOST}
 
@@ -164,7 +164,7 @@ services:
   # ---------- Gateway (Nginx) ----------
   gateway:
     image: nginx:alpine
-    container_name: qomo_gateway
+    container_name: platformcore_gateway
     restart: unless-stopped
     profiles: ["gateway", "full"]
     ports:
@@ -176,38 +176,38 @@ services:
       - api-core
       - frontend-client
       - frontend-admin
-    networks: [qomo-network]
+    networks: [platformcore-network]
 
   # ---------- Frontend CLIENT ----------
   frontend-client:
-    image: europe-southwest1-docker.pkg.dev/apps-ds-global/qomo-platform/frontend-client:${IMAGE_TAG}
+    image: europe-southwest1-docker.pkg.dev/apps-ds-global/platformcore-platform/frontend-client:${IMAGE_TAG}
     build:
       context: ../../frontend
       dockerfile: Dockerfile.client
-    container_name: qomo_frontend_client
+    container_name: platformcore_frontend_client
     restart: unless-stopped
     profiles: ["front", "full"]
     ports:
       - "4200:4200"
-    networks: [qomo-network]
+    networks: [platformcore-network]
 
   # ---------- Frontend ADMIN ----------
   frontend-admin:
-    image: europe-southwest1-docker.pkg.dev/apps-ds-global/qomo-platform/frontend-admin:${IMAGE_TAG}
+    image: europe-southwest1-docker.pkg.dev/apps-ds-global/platformcore-platform/frontend-admin:${IMAGE_TAG}
     build:
       context: ../../frontend
       dockerfile: Dockerfile.admin
-    container_name: qomo_frontend_admin
+    container_name: platformcore_frontend_admin
     restart: unless-stopped
     profiles: ["front", "full"]
     ports:
       - "4201:80"
-    networks: [qomo-network]
+    networks: [platformcore-network]
 
 networks:
-  qomo-network:
+  platformcore-network:
     driver: bridge
 
 volumes:
-  qomo_postgres_data:
-  qomo_kafka_data:
+  platformcore_postgres_data:
+  platformcore_kafka_data:

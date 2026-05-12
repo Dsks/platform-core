@@ -6,9 +6,9 @@ plugins {
     jacoco
 }
 
-group = "app.qomo"
+group = "app.platformcore"
 version = "0.0.1-SNAPSHOT"
-description = "Qomo Platform"
+description = "PlatformCore"
 
 java {
     toolchain {

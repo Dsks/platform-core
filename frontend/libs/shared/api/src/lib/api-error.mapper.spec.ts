@@ -8,7 +8,7 @@ import {
 describe('api-error mapper', () => {
   it('preserves backend problem details extensions', () => {
     const problem = normalizeProblemDetails({
-      type: 'https://qomo.app/problems/VALIDATION_ERROR',
+      type: 'https://platformcore.app/problems/VALIDATION_ERROR',
       title: 'VALIDATION_ERROR',
       status: 400,
       detail: 'Request validation failed',
@@ -18,7 +18,7 @@ describe('api-error mapper', () => {
     });
 
     expect(problem).toEqual({
-      type: 'https://qomo.app/problems/VALIDATION_ERROR',
+      type: 'https://platformcore.app/problems/VALIDATION_ERROR',
       title: 'VALIDATION_ERROR',
       status: 400,
       detail: 'Request validation failed',
@@ -33,7 +33,7 @@ describe('api-error mapper', () => {
       status: 403,
       statusText: 'Forbidden',
       error: {
-        type: 'https://qomo.app/problems/EMAIL_NOT_VERIFIED',
+        type: 'https://platformcore.app/problems/EMAIL_NOT_VERIFIED',
         title: 'EMAIL_NOT_VERIFIED',
         status: 403,
         detail: 'Login not completed',
@@ -41,7 +41,7 @@ describe('api-error mapper', () => {
     });
 
     expect(normalizeApiError(error).problem).toMatchObject({
-      type: 'https://qomo.app/problems/EMAIL_NOT_VERIFIED',
+      type: 'https://platformcore.app/problems/EMAIL_NOT_VERIFIED',
       title: 'EMAIL_NOT_VERIFIED',
       status: 403,
       detail: 'Login not completed',

@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
-import { AuthApiService, CsrfTokenStore } from '@qomo/shared-api';
-import { CsrfResponse, CurrentUser, LoginRequest } from '@qomo/shared-models';
+import { AuthApiService, CsrfTokenStore } from '@platformcore/shared-api';
+import { CsrfResponse, CurrentUser, LoginRequest } from '@platformcore/shared-models';
 import { catchError, map, Observable, of, switchMap, tap } from 'rxjs';
 import { SessionStore } from './session-store';
 

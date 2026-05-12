@@ -2,9 +2,9 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "nx: serve qomo-web",
+      "label": "nx: serve platformcore-web",
       "type": "shell",
-      "command": "npx nx serve qomo-web",
+      "command": "npx nx serve platformcore-web",
       "isBackground": true,
       "problemMatcher": {
         "owner": "typescript",

@@ -20,7 +20,7 @@ describe('shared models', () => {
       password: 'StrongPassw0rd!',
     };
     const problem: ProblemDetails = {
-      type: 'https://qomo.app/problems/VALIDATION_ERROR',
+      type: 'https://platformcore.app/problems/VALIDATION_ERROR',
       title: 'VALIDATION_ERROR',
       status: 400,
       errors: ['email: must be a well-formed email address'],

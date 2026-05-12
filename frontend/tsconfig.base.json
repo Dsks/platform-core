@@ -15,10 +15,10 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@qomo/shared-api": ["libs/shared/api/src/index.ts"],
-      "@qomo/shared-auth": ["libs/shared/auth/src/index.ts"],
-      "@qomo/shared-core": ["libs/shared/core/src/index.ts"],
-      "@qomo/shared-models": ["libs/shared/models/src/index.ts"]
+      "@platformcore/shared-api": ["libs/shared/api/src/index.ts"],
+      "@platformcore/shared-auth": ["libs/shared/auth/src/index.ts"],
+      "@platformcore/shared-core": ["libs/shared/core/src/index.ts"],
+      "@platformcore/shared-models": ["libs/shared/models/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

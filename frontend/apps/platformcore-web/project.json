@@ -1,0 +1,92 @@
+{
+  "name": "platformcore-web",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "prefix": "app",
+  "sourceRoot": "apps/platformcore-web/src",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@angular/build:application",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/platformcore-web",
+        "browser": "apps/platformcore-web/src/main.ts",
+        "tsConfig": "apps/platformcore-web/tsconfig.app.json",
+        "inlineStyleLanguage": "scss",
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "apps/platformcore-web/public"
+          },
+          {
+            "glob": "**/*",
+            "input": "libs/shared/assets/public",
+            "output": "."
+          }
+        ],
+        "styles": ["apps/platformcore-web/src/styles.scss"],
+        "server": "apps/platformcore-web/src/main.server.ts",
+        "ssr": {
+          "entry": "apps/platformcore-web/src/server.ts"
+        },
+        "outputMode": "server"
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "500kb",
+              "maximumError": "1mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "4kb",
+              "maximumError": "8kb"
+            }
+          ],
+          "outputHashing": "all"
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "continuous": true,
+      "executor": "@angular/build:dev-server",
+      "configurations": {
+        "production": {
+          "buildTarget": "platformcore-web:build:production"
+        },
+        "development": {
+          "buildTarget": "platformcore-web:build:development"
+        }
+      },
+      "defaultConfiguration": "development"
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {
+        "runnerConfig": "apps/platformcore-web/vitest.config.ts"
+      }
+    },
+    "serve-static": {
+      "continuous": true,
+      "executor": "@nx/web:file-server",
+      "options": {
+        "buildTarget": "platformcore-web:build",
+        "port": 4200,
+        "staticFilePath": "dist/apps/platformcore-web/browser",
+        "spa": true
+      }
+    }
+  }
+}

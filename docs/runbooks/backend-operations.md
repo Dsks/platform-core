@@ -2,7 +2,7 @@
 
 ## A. Purpose
 
-Practical first-line runbook for operating and diagnosing the Qomo backend email-verification path: `api-users`, `email-sender`, Nginx gateway, PostgreSQL, and Kafka/Redpanda.
+Practical first-line runbook for operating and diagnosing the PlatformCore backend email-verification path: `api-users`, `email-sender`, Nginx gateway, PostgreSQL, and Kafka/Redpanda.
 
 This does not cover frontend operation, `api-core` business workflows, production incident command, schema design, or manual data repair.
 
@@ -10,13 +10,13 @@ This does not cover frontend operation, `api-core` business workflows, productio
 
 | Service | Local container | What to check first |
 | --- | --- | --- |
-| `api-users` | `qomo_api_users` | Auth/user logs, `auth_outbox_events`, Kafka producer config. |
-| `email-sender` | `qomo_email_sender` | Consumer logs, `email_jobs`, SMTP config, payload key. |
-| gateway/Nginx | `qomo_gateway` | `/health`, upstream errors, Swagger routing/blocks. |
-| PostgreSQL | `qomo_postgres` | `qomo_api_users_db`, `qomo_email_sender_db`, Flyway history. |
-| Kafka/Redpanda | `qomo_kafka` locally; Redpanda in E2E | Topic, broker availability, consumer group lag. |
+| `api-users` | `platformcore_api_users` | Auth/user logs, `auth_outbox_events`, Kafka producer config. |
+| `email-sender` | `platformcore_email_sender` | Consumer logs, `email_jobs`, SMTP config, payload key. |
+| gateway/Nginx | `platformcore_gateway` | `/health`, upstream errors, Swagger routing/blocks. |
+| PostgreSQL | `platformcore_postgres` | `platformcore_api_users_db`, `platformcore_email_sender_db`, Flyway history. |
+| Kafka/Redpanda | `platformcore_kafka` locally; Redpanda in E2E | Topic, broker availability, consumer group lag. |
 
-Local DBs are created by `docker/postgres/init/01-create-databases.sql`: `qomo_api_users_db`, `qomo_api_core_db`, `qomo_email_sender_db`.
+Local DBs are created by `docker/postgres/init/01-create-databases.sql`: `platformcore_api_users_db`, `platformcore_api_core_db`, `platformcore_email_sender_db`.
 
 ## C. Local Startup
 
@@ -34,9 +34,9 @@ docker compose --env-file .\.env -f .\docker\compose\docker-compose.local.yml --
 
 # Status and logs
 docker compose --env-file .\.env -f .\docker\compose\docker-compose.local.yml --profile full ps
-docker logs qomo_api_users --tail 100
-docker logs qomo_email_sender --tail 100
-docker logs qomo_gateway --tail 100
+docker logs platformcore_api_users --tail 100
+docker logs platformcore_email_sender --tail 100
+docker logs platformcore_gateway --tail 100
 ```
 
 Health and routing:
@@ -70,14 +70,14 @@ cd ..\email-sender
 .\gradlew.bat test
 ```
 
-CI uses the Linux equivalents with `./gradlew`. `api-users` and `email-sender` integration tests use PostgreSQL Testcontainers. `crossServiceE2eTest` uses PostgreSQL containers plus Redpanda `docker.redpanda.com/redpandadata/redpanda:v24.2.5` and topic `qomo.email.commands.e2e`. If Docker/Testcontainers is unavailable, expect container-backed tests to fail or be skipped depending on annotation; Docker is required for CI-parity.
+CI uses the Linux equivalents with `./gradlew`. `api-users` and `email-sender` integration tests use PostgreSQL Testcontainers. `crossServiceE2eTest` uses PostgreSQL containers plus Redpanda `docker.redpanda.com/redpandadata/redpanda:v24.2.5` and topic `platformcore.email.commands.e2e`. If Docker/Testcontainers is unavailable, expect container-backed tests to fail or be skipped depending on annotation; Docker is required for CI-parity.
 
 ## E. `api-users` Outbox Troubleshooting
 
-Table: `auth_outbox_events` in `qomo_api_users_db`.
+Table: `auth_outbox_events` in `platformcore_api_users_db`.
 
 ```powershell
-docker exec -it qomo_postgres psql -U qomo_api_users_user -d qomo_api_users_db
+docker exec -it platformcore_postgres psql -U platformcore_api_users_user -d platformcore_api_users_db
 ```
 
 ```sql
@@ -97,22 +97,22 @@ Real states:
 
 | Status | Meaning |
 | --- | --- |
-| `PENDING` | Inserted by `api-users`; eligible after `qomo.outbox.publisher.min-age-ms`. |
+| `PENDING` | Inserted by `api-users`; eligible after `platformcore.outbox.publisher.min-age-ms`. |
 | `IN_PROGRESS` | Claimed by `OutboxPublisherJob`; should be short-lived. |
 | `SENT` | Kafka send acknowledged. |
 | `FAILED` | Publish failed; retryable while attempts remain. |
-| `DEAD` | Terminal publish failure after `qomo.outbox.publisher.max-attempts`. |
+| `DEAD` | Terminal publish failure after `platformcore.outbox.publisher.max-attempts`. |
 
-Logs to search in `qomo_api_users`: `email_verification_issued`, `email_verification_resend_rate_limited`, `outbox_event_published` (debug), `outbox_event_failed`, `outbox_event_dead`.
+Logs to search in `platformcore_api_users`: `email_verification_issued`, `email_verification_resend_rate_limited`, `outbox_event_published` (debug), `outbox_event_failed`, `outbox_event_dead`.
 
 Do not manually edit `payload_json`, reset `attempts`, or move statuses without an approved repair plan. Prefer natural scheduled retry or controlled replay.
 
 ## F. `email-sender` Job Troubleshooting
 
-Table: `email_jobs` in `qomo_email_sender_db`.
+Table: `email_jobs` in `platformcore_email_sender_db`.
 
 ```powershell
-docker exec -it qomo_postgres psql -U qomo_email_sender_user -d qomo_email_sender_db
+docker exec -it platformcore_postgres psql -U platformcore_email_sender_user -d platformcore_email_sender_db
 ```
 
 ```sql
@@ -135,30 +135,30 @@ Real states:
 | `PENDING` | Durable job created before first send attempt completed. |
 | `SENT` | SMTP delivery call completed and job was marked sent. |
 | `FAILED` | Send/render/decrypt/deserialization failure persisted for retry. |
-| `DEAD` | Terminal retry failure after `qomo.email.retry.max-attempts`. |
+| `DEAD` | Terminal retry failure after `platformcore.email.retry.max-attempts`. |
 
 There is no `IN_PROGRESS` state in `email_jobs`; retry claiming refreshes `updated_at` while status remains `PENDING` or `FAILED`.
 
-Logs to search in `qomo_email_sender`: `email_command_sent`, `email_command_send_failed`, `email_command_invalid`, `email_command_processing_failed`, `duplicate_event`, `email_command_ignored`, `retry_batch_size`, `retry_attempt`, `retry_failed`.
+Logs to search in `platformcore_email_sender`: `email_command_sent`, `email_command_send_failed`, `email_command_invalid`, `email_command_processing_failed`, `duplicate_event`, `email_command_ignored`, `retry_batch_size`, `retry_attempt`, `retry_failed`.
 
-SMTP diagnosis: check `SPRING_MAIL_HOST`, `SPRING_MAIL_PORT`, `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD`, `SPRING_MAIL_SMTP_AUTH`, `SPRING_MAIL_SMTP_STARTTLS`, `QOMO_MAIL_FROM`, `QOMO_SUBJECT_EMAIL_VERIFICATION`. Local Mailpit UI is usually `http://localhost:8025`.
+SMTP diagnosis: check `SPRING_MAIL_HOST`, `SPRING_MAIL_PORT`, `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD`, `SPRING_MAIL_SMTP_AUTH`, `SPRING_MAIL_SMTP_STARTTLS`, `PLATFORMCORE_MAIL_FROM`, `PLATFORMCORE_SUBJECT_EMAIL_VERIFICATION`. Local Mailpit UI is usually `http://localhost:8025`.
 
-Payload/key/config diagnosis: check `QOMO_EMAIL_PAYLOAD_KEY_B64`; invalid Kafka payloads are logged as `email_command_invalid reason=<code> sha=<digest> size=<bytes>` and acknowledged/discarded. Supported command pair is `EMAIL_VERIFICATION_REQUESTED` with template `EMAIL_VERIFICATION`.
+Payload/key/config diagnosis: check `PLATFORMCORE_EMAIL_PAYLOAD_KEY_B64`; invalid Kafka payloads are logged as `email_command_invalid reason=<code> sha=<digest> size=<bytes>` and acknowledged/discarded. Supported command pair is `EMAIL_VERIFICATION_REQUESTED` with template `EMAIL_VERIFICATION`.
 
 Do not decrypt `payload_enc`, write raw email addresses into notes, or update job status by hand without approval.
 
 ## G. Kafka/Redpanda Troubleshooting
 
-Local Compose uses service `kafka` / container `qomo_kafka`. E2E uses Redpanda Testcontainers.
+Local Compose uses service `kafka` / container `platformcore_kafka`. E2E uses Redpanda Testcontainers.
 
 ```powershell
 docker compose --env-file .\.env -f .\docker\compose\docker-compose.local.yml --profile infra ps kafka
-docker logs qomo_kafka --tail 100
-docker exec -it qomo_kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
-docker exec -it qomo_kafka /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --group qomo-email-sender
+docker logs platformcore_kafka --tail 100
+docker exec -it platformcore_kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
+docker exec -it platformcore_kafka /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --group platformcore-email-sender
 ```
 
-Email command topic defaults to `qomo.email.commands`. Property: `qomo.kafka.topics.email-commands`; env var: `QOMO_TOPIC_EMAIL_COMMANDS`.
+Email command topic defaults to `platformcore.email.commands`. Property: `platformcore.kafka.topics.email-commands`; env var: `PLATFORMCORE_TOPIC_EMAIL_COMMANDS`.
 
 Differentiate failure modes:
 
@@ -178,8 +178,8 @@ LIMIT 20;
 
 DB separation:
 
-- `qomo_api_users_db`: `auth_users`, `auth_roles`, `auth_users_roles`, `auth_verification_tokens`, `auth_outbox_events`.
-- `qomo_email_sender_db`: `email_jobs`.
+- `platformcore_api_users_db`: `auth_users`, `auth_roles`, `auth_users_roles`, `auth_verification_tokens`, `auth_outbox_events`.
+- `platformcore_email_sender_db`: `email_jobs`.
 
 Do not edit migrations already applied to persistent environments. Add a new versioned migration instead.
 
@@ -198,11 +198,11 @@ Global routes intentionally return `404` locally: `/v3/api-docs`, `/v3/api-docs/
 Backend properties:
 
 ```properties
-springdoc.api-docs.enabled=${QOMO_OPENAPI_ENABLED:false}
-springdoc.swagger-ui.enabled=${QOMO_SWAGGER_UI_ENABLED:false}
+springdoc.api-docs.enabled=${PLATFORMCORE_OPENAPI_ENABLED:false}
+springdoc.swagger-ui.enabled=${PLATFORMCORE_SWAGGER_UI_ENABLED:false}
 ```
 
-`application-local.properties` enables both. If UI loads but cannot find `/v3/api-docs`, check active profile/env vars, use the namespaced URL, verify `docker/nginx/default.conf` is mounted, and inspect `qomo_gateway` upstream errors to `api-users:8080`.
+`application-local.properties` enables both. If UI loads but cannot find `/v3/api-docs`, check active profile/env vars, use the namespaced URL, verify `docker/nginx/default.conf` is mounted, and inspect `platformcore_gateway` upstream errors to `api-users:8080`.
 
 ## J. Logging and Sensitive Data
 
@@ -214,17 +214,17 @@ Safe correlation data: `eventId`, `outboxId`, `aggregateId`, `userId`, `correlat
 
 Safe inspections: `docker compose ps`, `docker logs ... --tail N`, read-only SQL `SELECT`, Kafka topic list, consumer-group describe, and Mailpit UI in local development.
 
-Changes requiring approval: status updates, Kafka replay, row deletion, Flyway history edits, applied migration edits, and rotation of `JWT_SECRET`, `QOMO_EMAIL_PAYLOAD_KEY_B64`, SMTP credentials, or DB credentials.
+Changes requiring approval: status updates, Kafka replay, row deletion, Flyway history edits, applied migration edits, and rotation of `JWT_SECRET`, `PLATFORMCORE_EMAIL_PAYLOAD_KEY_B64`, SMTP credentials, or DB credentials.
 
 Prefer natural retries when rows are `FAILED` and attempts remain. Use controlled replay only when durable state cannot progress by itself.
 
 ## L. Escalation Checklist
 
 1. Health/routing: `curl.exe http://localhost/health`, `docker compose ... ps`.
-2. Logs: `qomo_api_users`, `qomo_email_sender`, `qomo_gateway`, `qomo_kafka`.
+2. Logs: `platformcore_api_users`, `platformcore_email_sender`, `platformcore_gateway`, `platformcore_kafka`.
 3. DB counts: `auth_outbox_events` and `email_jobs` grouped by status.
-4. Kafka: broker availability, topic list, `qomo-email-sender` consumer group.
-5. Config/env: DB URLs/users, `KAFKA_BOOTSTRAP_SERVERS`, `QOMO_TOPIC_EMAIL_COMMANDS`, SMTP vars, `QOMO_EMAIL_PAYLOAD_KEY_B64`, OpenAPI vars, retry tuning vars.
+4. Kafka: broker availability, topic list, `platformcore-email-sender` consumer group.
+5. Config/env: DB URLs/users, `KAFKA_BOOTSTRAP_SERVERS`, `PLATFORMCORE_TOPIC_EMAIL_COMMANDS`, SMTP vars, `PLATFORMCORE_EMAIL_PAYLOAD_KEY_B64`, OpenAPI vars, retry tuning vars.
 6. CI/E2E: especially `backend/api-users` `crossServiceE2eTest`.
 
 ## Operational Gaps / Follow-ups
@@ -243,7 +243,7 @@ This is intentional: disabling topic auto-creation avoids silently creating wron
 The email command flow requires this topic:
 
 ```text
-qomo.email.commands
+platformcore.email.commands
 ```
 
 Create it manually when provisioning a new Kafka environment:
@@ -253,7 +253,7 @@ docker exec -it kafka /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
   --create \
   --if-not-exists \
-  --topic qomo.email.commands \
+  --topic platformcore.email.commands \
   --partitions 1 \
   --replication-factor 1
 ```
@@ -272,19 +272,19 @@ Describe the topic:
 docker exec -it kafka /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
   --describe \
-  --topic qomo.email.commands
+  --topic platformcore.email.commands
 ```
 
 Expected usage:
 
-- `api-users` publishes email command events to `qomo.email.commands`.
-- `email-sender` consumes from `qomo.email.commands`.
+- `api-users` publishes email command events to `platformcore.email.commands`.
+- `email-sender` consumes from `platformcore.email.commands`.
 
 If `api-users` logs this error:
 
 ```text
 UNKNOWN_TOPIC_OR_PARTITION
-Topic qomo.email.commands not present in metadata after 60000 ms
+Topic platformcore.email.commands not present in metadata after 60000 ms
 ```
 
 then Kafka is reachable, but the topic does not exist or the configured topic name does not match.
@@ -292,7 +292,7 @@ then Kafka is reachable, but the topic does not exist or the configured topic na
 Check that both services use the same topic value:
 
 ```text
-QOMO_TOPIC_EMAIL_COMMANDS=qomo.email.commands
+PLATFORMCORE_TOPIC_EMAIL_COMMANDS=platformcore.email.commands
 ```
 
 Do not enable Kafka topic auto-creation in pre-production/production unless there is a deliberate operational reason.

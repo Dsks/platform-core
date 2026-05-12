@@ -1,0 +1,17 @@
+{
+  "name": "platformcore-admin-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/platformcore-admin-e2e/src",
+  "implicitDependencies": ["platformcore-admin"],
+  "// targets": "to see all targets run: nx show project platformcore-admin-e2e --web",
+  "targets": {
+    "e2e": {
+      "executor": "@nx/playwright:playwright",
+      "outputs": ["{workspaceRoot}/dist/.playwright/apps/platformcore-admin-e2e"],
+      "options": {
+        "config": "apps/platformcore-admin-e2e/playwright.config.ts"
+      }
+    }
+  }
+}

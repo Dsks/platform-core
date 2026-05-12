@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { CurrentUser } from '@qomo/shared-models';
+import { CurrentUser } from '@platformcore/shared-models';
 import { SessionStore } from './session-store';
 
 const clientUser: CurrentUser = {

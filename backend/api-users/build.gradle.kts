@@ -6,9 +6,9 @@ plugins {
     jacoco
 }
 
-group = "app.qomo"
+group = "app.platformcore"
 version = "0.0.1-SNAPSHOT"
-description = "Qomo Platform"
+description = "PlatformCore"
 
 val emailSenderDir = file("../email-sender")
 
@@ -64,7 +64,7 @@ dependencies {
 
 sourceSets {
     named("test") {
-        java.exclude("app/qomo/apiusers/e2e/**")
+        java.exclude("app/platformcore/apiusers/e2e/**")
     }
 
     create("crossServiceE2e") {
@@ -85,7 +85,7 @@ configurations.named("crossServiceE2eRuntimeOnly") {
 
 dependencies {
     if (emailSenderDir.isDirectory) {
-        add("crossServiceE2eImplementation", "app.qomo:email-sender:0.0.1-SNAPSHOT")
+        add("crossServiceE2eImplementation", "app.platformcore:email-sender:0.0.1-SNAPSHOT")
     }
 }
 

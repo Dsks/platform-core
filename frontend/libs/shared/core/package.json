@@ -1,5 +1,5 @@
 {
-  "name": "@qomo/shared-core",
+  "name": "@platformcore/shared-core",
   "version": "0.0.1",
   "private": true,
   "type": "commonjs",
