@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { normalizeApiError } from '@qomo/shared-api';
-import type { RegistrationAcceptedResponse } from '@qomo/shared-models';
+import { normalizeApiError } from '@platformcore/shared-api';
+import type { RegistrationAcceptedResponse } from '@platformcore/shared-models';
 
 const LOGIN_ERROR_MESSAGE =
   'No hemos podido iniciar sesión. Revisa tus credenciales.';

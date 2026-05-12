@@ -3,16 +3,16 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "lint-web": "npx nx lint qomo-web",
-    "lint-admin": "npx nx lint qomo-admin",
-    "test-web": "npx nx test qomo-web --coverage",
-    "test-admin": "npx nx test qomo-admin --coverage",
-    "e2e-web": "npx nx e2e qomo-web-e2e",
-    "e2e-admin": "npx nx e2e qomo-admin-e2e",
-    "serve-web": "npx nx serve qomo-web",
-    "serve-admin": "npx nx serve qomo-admin",
-    "build-web": "npx nx build qomo-web",
-    "build-admin": "npx nx build qomo-admin"
+    "lint-web": "npx nx lint platformcore-web",
+    "lint-admin": "npx nx lint platformcore-admin",
+    "test-web": "npx nx test platformcore-web --coverage",
+    "test-admin": "npx nx test platformcore-admin --coverage",
+    "e2e-web": "npx nx e2e platformcore-web-e2e",
+    "e2e-admin": "npx nx e2e platformcore-admin-e2e",
+    "serve-web": "npx nx serve platformcore-web",
+    "serve-admin": "npx nx serve platformcore-admin",
+    "build-web": "npx nx build platformcore-web",
+    "build-admin": "npx nx build platformcore-admin"
   },
   "private": true,
   "dependencies": {

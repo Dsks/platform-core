@@ -1,3 +1,3 @@
 # shared-models
 
-Shared frontend TypeScript contracts for Qomo browser clients.
+Shared frontend TypeScript contracts for PlatformCore browser clients.

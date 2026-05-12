@@ -1,13 +1,13 @@
 {
-  "name": "@qomo/shared-auth",
+  "name": "@platformcore/shared-auth",
   "version": "0.0.1",
   "private": true,
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "dependencies": {
-    "@qomo/shared-api": "0.0.1",
-    "@qomo/shared-models": "0.0.1",
+    "@platformcore/shared-api": "0.0.1",
+    "@platformcore/shared-models": "0.0.1",
     "tslib": "^2.3.0"
   },
   "peerDependencies": {

@@ -5,7 +5,7 @@ import {
   Router,
   UrlTree,
 } from '@angular/router';
-import { CurrentUser } from '@qomo/shared-models';
+import { CurrentUser } from '@platformcore/shared-models';
 import { adminGuard, authGuard, guestGuard } from './auth-guards';
 import { AUTH_EXTERNAL_REDIRECT, provideAuthRedirects } from './auth-redirects';
 import { SessionStore } from './session-store';

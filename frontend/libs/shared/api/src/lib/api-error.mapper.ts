@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import type { ProblemDetails } from '@qomo/shared-models';
+import type { ProblemDetails } from '@platformcore/shared-models';
 
 export interface NormalizedApiError {
   problem: ProblemDetails;

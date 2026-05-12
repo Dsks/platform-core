@@ -1,5 +1,5 @@
 import { computed, Injectable, signal } from '@angular/core';
-import { CurrentUser, QOMO_ROLES, Role } from '@qomo/shared-models';
+import { CurrentUser, PLATFORMCORE_ROLES, Role } from '@platformcore/shared-models';
 import type { SessionState } from './session.types';
 
 const initialSessionState: SessionState = {
@@ -20,14 +20,14 @@ export class SessionStore {
   );
   readonly isGuest = computed(() => this.status() === 'guest');
   readonly isAdmin = computed(() =>
-    this.hasAnyRole(QOMO_ROLES.ADMIN, QOMO_ROLES.SUPERADMIN),
+    this.hasAnyRole(PLATFORMCORE_ROLES.ADMIN, PLATFORMCORE_ROLES.SUPERADMIN),
   );
   readonly isSuperAdmin = computed(() =>
-    this.hasAnyRole(QOMO_ROLES.SUPERADMIN),
+    this.hasAnyRole(PLATFORMCORE_ROLES.SUPERADMIN),
   );
   readonly isClient = computed(
     () =>
-      this.hasAnyRole(QOMO_ROLES.CLIENT, QOMO_ROLES.USER) ||
+      this.hasAnyRole(PLATFORMCORE_ROLES.CLIENT, PLATFORMCORE_ROLES.USER) ||
       (this.isAuthenticated() && !this.isAdmin()),
   );
 

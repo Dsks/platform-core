@@ -9,7 +9,7 @@ import {
   RegistrationAcceptedResponse,
   ResendVerificationRequest,
   VerifyEmailRequest,
-} from '@qomo/shared-models';
+} from '@platformcore/shared-models';
 import { Observable, tap } from 'rxjs';
 import { API_BASE_URL } from './api-base-url';
 import { buildApiUrl } from './api-url';

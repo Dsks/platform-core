@@ -1,4 +1,4 @@
-import type { CurrentUser } from '@qomo/shared-models';
+import type { CurrentUser } from '@platformcore/shared-models';
 
 export type SessionStatus = 'unknown' | 'authenticated' | 'guest';
 

@@ -10,7 +10,7 @@ RUN npm ci
 
 COPY . .
 
-RUN npx nx run qomo-web:build:production
+RUN npx nx run platformcore-web:build:production
 
 # ==========================================
 # STAGE 2: RUNTIME (Node 22 SSR)
@@ -25,7 +25,7 @@ ENV HOST=0.0.0.0
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-COPY --from=builder /workspace/dist/apps/qomo-web ./dist/apps/qomo-web
+COPY --from=builder /workspace/dist/apps/platformcore-web ./dist/apps/platformcore-web
 
 COPY --from=builder /workspace/package.json ./
 
@@ -33,4 +33,4 @@ EXPOSE 4200
 
 USER appuser
 
-CMD ["node", "dist/apps/qomo-web/server/server.mjs"]
+CMD ["node", "dist/apps/platformcore-web/server/server.mjs"]

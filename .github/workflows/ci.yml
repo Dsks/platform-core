@@ -1,4 +1,4 @@
-name: CI - Qomo Platform
+name: CI - PlatformCore
 
 on:
   pull_request:
@@ -63,7 +63,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [qomo-web, qomo-admin]
+        app: [platformcore-web, platformcore-admin]
 
     defaults:
       run:

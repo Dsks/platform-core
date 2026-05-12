@@ -1,0 +1,114 @@
+<div class="client-layout" [class.client-layout-menu-open]="mobileMenuOpen()">
+  <header class="client-header">
+    <a
+      class="brand-link"
+      routerLink="/panel"
+      aria-label="Ir al panel"
+      (click)="closeMobileMenu()"
+    >
+      <img class="brand-logo" src="/logo.webp" alt="PlatformCore" />
+    </a>
+
+    <nav class="desktop-nav" aria-label="Navegacion principal">
+      @for (item of navItems; track item.path) {
+        <a
+          class="nav-link"
+          [routerLink]="item.path"
+          routerLinkActive="nav-link-active"
+          [routerLinkActiveOptions]="{ exact: item.exact }"
+        >
+          {{ item.label }}
+        </a>
+      }
+    </nav>
+
+    <a
+      class="desktop-user-email"
+      routerLink="/perfil"
+      [title]="userEmail()"
+    >
+      {{ userEmail() }}
+    </a>
+
+    <button
+      class="icon-button desktop-logout"
+      type="button"
+      [disabled]="loggingOut()"
+      [attr.aria-label]="logoutLabel()"
+      [matTooltip]="logoutLabel()"
+      (click)="logout()"
+    >
+      <mat-icon aria-hidden="true">logout</mat-icon>
+    </button>
+
+    <button
+      class="icon-button mobile-menu-button"
+      type="button"
+      [attr.aria-label]="mobileMenuOpen() ? 'Cerrar menu' : 'Abrir menu'"
+      [matTooltip]="mobileMenuOpen() ? 'Cerrar menu' : 'Abrir menu'"
+      (click)="toggleMobileMenu()"
+    >
+      <mat-icon aria-hidden="true">
+        {{ mobileMenuOpen() ? 'close' : 'menu' }}
+      </mat-icon>
+    </button>
+  </header>
+
+  @if (logoutError(); as message) {
+    <p class="logout-error" role="alert">{{ message }}</p>
+  }
+
+  @if (mobileMenuOpen()) {
+    <button
+      class="mobile-backdrop"
+      type="button"
+      aria-label="Cerrar menu"
+      (click)="closeMobileMenu()"
+    ></button>
+  }
+
+  <aside
+    class="mobile-menu"
+    aria-label="Menu principal"
+    [attr.aria-hidden]="!mobileMenuOpen()"
+  >
+    <nav class="mobile-nav" aria-label="Navegacion principal movil">
+      @for (item of navItems; track item.path) {
+        <a
+          class="mobile-nav-link"
+          [routerLink]="item.path"
+          routerLinkActive="mobile-nav-link-active"
+          [routerLinkActiveOptions]="{ exact: item.exact }"
+          (click)="closeMobileMenu()"
+        >
+          {{ item.label }}
+        </a>
+      }
+    </nav>
+
+    <div class="mobile-menu-footer">
+      <a
+        class="mobile-user-email"
+        routerLink="/perfil"
+        [title]="userEmail()"
+        (click)="closeMobileMenu()"
+      >
+        {{ userEmail() }}
+      </a>
+
+      <button
+        class="mobile-logout"
+        type="button"
+        [disabled]="loggingOut()"
+        (click)="logout()"
+      >
+        <mat-icon aria-hidden="true">logout</mat-icon>
+        <span>{{ logoutLabel() }}</span>
+      </button>
+    </div>
+  </aside>
+
+  <main class="client-main">
+    <router-outlet />
+  </main>
+</div>

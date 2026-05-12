@@ -1,11 +1,11 @@
-export const QOMO_ROLES = {
+export const PLATFORMCORE_ROLES = {
   CLIENT: 'CLIENT',
   USER: 'USER',
   ADMIN: 'ADMIN',
   SUPERADMIN: 'SUPERADMIN',
 } as const;
 
-export type KnownRole = (typeof QOMO_ROLES)[keyof typeof QOMO_ROLES];
+export type KnownRole = (typeof PLATFORMCORE_ROLES)[keyof typeof PLATFORMCORE_ROLES];
 
 export type Role = KnownRole | (string & {});
 

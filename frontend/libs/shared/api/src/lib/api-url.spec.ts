@@ -17,12 +17,12 @@ describe('api-url', () => {
     expect(isApiUrl('/v1/auth/login')).toBe(true);
     expect(isApiUrl('/assets/config.json')).toBe(false);
     expect(
-      isApiUrl('https://api.qomo.app/v1/auth/login', 'https://api.qomo.app/v1'),
+      isApiUrl('https://api.platformcore.app/v1/auth/login', 'https://api.platformcore.app/v1'),
     ).toBe(true);
     expect(
       isApiUrl(
         'https://other.example/v1/auth/login',
-        'https://api.qomo.app/v1',
+        'https://api.platformcore.app/v1',
       ),
     ).toBe(false);
   });
