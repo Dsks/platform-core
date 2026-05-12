@@ -1,0 +1,171 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.verify-email {
+  align-items: center;
+  background: var(--color-background);
+  display: flex;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.verify-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-panel);
+  margin: 0 auto;
+  max-width: 520px;
+  width: 100%;
+}
+
+.verify-content {
+  padding: 32px;
+}
+
+.verify-heading {
+  margin-bottom: 14px;
+}
+
+.verify-heading .auth-logo {
+  width: stretch;
+}
+
+.verify-heading h1 {
+  color: var(--color-text-primary);
+  font-size: 1.75rem;
+  line-height: 1.2;
+  margin: 0;
+  text-align: center;
+}
+
+.message {
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  margin: 0 0 20px;
+}
+
+.verify-form {
+  display: grid;
+  gap: 12px;
+}
+
+.auth-field {
+  width: 100%;
+}
+
+.error-message,
+.success-message,
+.cooldown-message {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.error-message,
+.success-message {
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
+.error-message {
+  background: var(--color-error-container);
+  border: 1px solid color-mix(in srgb, var(--color-error), transparent 55%);
+  color: var(--color-error);
+}
+
+.success-message {
+  background: var(--color-success-container);
+  border: 1px solid color-mix(in srgb, var(--color-success), transparent 55%);
+  color: var(--color-success);
+}
+
+.cooldown-message {
+  color: var(--color-text-secondary);
+}
+
+.submit-button,
+.secondary-button {
+  min-height: 44px;
+  width: 100%;
+}
+
+.submit-button {
+  --mdc-filled-button-container-color: var(--color-primary);
+  --mdc-filled-button-label-text-color: var(--color-on-primary);
+
+  color: var(--color-on-primary);
+}
+
+.submit-button:not(:disabled) {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.button-content {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.button-spinner {
+  --mdc-circular-progress-active-indicator-color: currentColor;
+}
+
+.secondary-button {
+  --mdc-outlined-button-label-text-color: var(--color-primary);
+  --mdc-outlined-button-outline-color: var(--color-border);
+
+  background: var(--color-surface);
+  color: var(--color-primary);
+}
+
+.resend-divider {
+  margin: 26px 0 24px;
+}
+
+.resend-section {
+  display: grid;
+  gap: 12px;
+}
+
+.resend-section h2 {
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  margin: 0;
+}
+
+.resend-section > p {
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.verify-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.verify-links a {
+  color: var(--color-primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.verify-links a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .verify-email {
+    padding: 16px;
+  }
+
+  .verify-content {
+    padding: 24px;
+  }
+}

@@ -1,0 +1,97 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.admin-login {
+  align-items: center;
+  background: var(--color-background);
+  display: flex;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.login-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-panel);
+  margin: 0 auto;
+  max-width: 420px;
+  width: 100%;
+}
+
+.login-content {
+  padding: 32px;
+  padding-bottom: 36px !important;
+}
+
+.login-heading {
+  margin-bottom: 28px;
+}
+
+.login-heading .auth-logo {
+  width: stretch;
+}
+
+.login-heading h1 {
+  color: var(--color-text-primary);
+  font-size: 1.75rem;
+  line-height: 1.2;
+  margin: 0;
+  text-align: center;
+}
+
+.login-form {
+  display: grid;
+  gap: 12px;
+}
+
+.auth-field {
+  width: 100%;
+}
+
+.login-error {
+  background: var(--color-error-container);
+  border: 1px solid color-mix(in srgb, var(--color-error), transparent 55%);
+  border-radius: 6px;
+  color: var(--color-error);
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin: 0;
+  padding: 10px 12px;
+}
+
+.submit-button {
+  --mdc-filled-button-container-color: var(--color-primary);
+  --mdc-filled-button-label-text-color: var(--color-on-primary);
+
+  color: var(--color-on-primary);
+  min-height: 44px;
+  width: 100%;
+}
+
+.submit-button:not(:disabled) {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.button-content {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.button-spinner {
+  --mdc-circular-progress-active-indicator-color: currentColor;
+}
+
+@media (max-width: 480px) {
+  .admin-login {
+    padding: 16px;
+  }
+
+  .login-content {
+    padding: 24px;
+  }
+}

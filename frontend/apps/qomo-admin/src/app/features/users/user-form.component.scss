@@ -1,0 +1,190 @@
+:host {
+  display: block;
+}
+
+.user-form-page {
+  color: var(--color-text-primary);
+}
+
+.user-form-header {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin: 0 auto 28px;
+}
+
+.user-form-header p {
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
+.user-form-header h1 {
+  font-size: 2rem;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.user-form-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-panel);
+  margin: 0 auto;
+}
+
+.user-form-content {
+  padding: 24px;
+}
+
+.user-form-content h2 {
+  border-bottom: 1px solid var(--color-border);
+  font-size: 1rem;
+  margin: -4px -24px 24px;
+  padding: 12px 24px 20px;
+}
+
+.user-form {
+  display: grid;
+  gap: 14px;
+}
+
+.form-field {
+  width: 100%;
+}
+
+.readonly-grid {
+  align-items: center;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.readonly-field {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  min-height: 56px;
+  padding: 10px 12px;
+}
+
+.readonly-label {
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.roles-list {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.role-pill,
+.status-pill {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.82rem;
+  font-weight: 700;
+  min-height: 26px;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+
+.role-pill {
+  background: var(--color-surface-variant);
+  border: 1px solid var(--color-border);
+  color: var(--color-primary);
+}
+
+.status-pill {
+  background: var(--color-success-container);
+  border: 1px solid color-mix(in srgb, var(--color-success), transparent 58%);
+  color: var(--color-success);
+  width: fit-content;
+}
+
+.status-pill-off {
+  background: var(--color-error-container);
+  border-color: color-mix(in srgb, var(--color-error), transparent 58%);
+  color: var(--color-error);
+}
+
+.form-error {
+  background: var(--color-error-container);
+  border: 1px solid color-mix(in srgb, var(--color-error), transparent 55%);
+  border-radius: 6px;
+  color: var(--color-error);
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin: 0;
+  padding: 10px 12px;
+}
+
+.loading-state {
+  align-items: center;
+  color: var(--color-text-secondary);
+  display: flex;
+  font-weight: 700;
+  gap: 10px;
+  justify-content: center;
+  min-height: 220px;
+}
+
+.loading-state mat-progress-spinner,
+.button-spinner {
+  --mdc-circular-progress-active-indicator-color: currentColor;
+}
+
+.form-actions {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+.button-content {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+}
+
+@media (max-width: 720px) {
+  .user-form-header {
+    align-items: flex-start;
+    flex-direction: column;
+    margin-bottom: 20px;
+  }
+
+  .user-form-header h1 {
+    font-size: 1.65rem;
+  }
+
+  .user-form-content {
+    padding: 20px 16px;
+  }
+
+  .user-form-content h2 {
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .readonly-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+}

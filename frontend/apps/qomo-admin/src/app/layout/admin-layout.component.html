@@ -1,0 +1,91 @@
+<div class="admin-layout" [class.admin-layout-collapsed]="collapsed()">
+  <aside class="admin-sidebar" aria-label="Navegacion de administracion">
+    <div class="sidebar-header">
+      <a
+        class="brand-link"
+        routerLink="/panel"
+        aria-label="Ir al panel"
+      >
+        
+        @if (!collapsed()) {
+          <img class="brand-logo" src="logo.webp" alt="Platform-Core" />
+        } @else {
+          <img class="brand-logo-collapsed" src="logo_icon.webp" alt="Platform-Core" />
+        }
+      </a>
+
+      <button
+        class="icon-button sidebar-toggle"
+        type="button"
+        [attr.aria-label]="collapsed() ? 'Expandir menu' : 'Contraer menu'"
+        (click)="toggleSidebar()"
+      >
+        <mat-icon aria-hidden="true">
+          {{ collapsed() ? 'chevron_right' : 'chevron_left' }}
+        </mat-icon>
+      </button>
+    </div>
+
+    <nav class="admin-nav" aria-label="Secciones de administracion">
+      @for (item of navItems; track item.path) {
+        <a
+          class="nav-link"
+          [routerLink]="item.path"
+          routerLinkActive="nav-link-active"
+          [routerLinkActiveOptions]="{ exact: item.exact }"
+          [matTooltip]="collapsed() ? item.label : ''"
+          [matTooltipDisabled]="!collapsed()"
+          matTooltipPosition="right"
+          [attr.aria-label]="collapsed() ? item.label : null"
+        >
+          <mat-icon aria-hidden="true">{{ item.icon }}</mat-icon>
+          @if (!collapsed()) {
+            <span>{{ item.label }}</span>
+          }
+        </a>
+      }
+    </nav>
+
+    <div class="sidebar-footer">
+      <div
+        class="user-summary"
+        [routerLink]="'/perfil'"
+        [matTooltip]="collapsed() ? userEmail() : ''"
+        [matTooltipDisabled]="!collapsed()"
+        matTooltipPosition="right"
+      >
+        <span class="user-avatar" aria-hidden="true">{{ userInitial() }}</span>
+        @if (!collapsed()) {
+          <span class="user-email">{{ userEmail() }}</span>
+        }
+      </div>
+
+      @if (!collapsed()) {
+        @if (logoutError(); as message) {
+          <p class="logout-error" role="alert">{{ message }}</p>
+        }
+      }
+
+      <button
+        class="logout-button"
+        type="button"
+        [disabled]="loggingOut()"
+        [class.logout-button-collapsed]="collapsed()"
+        [attr.aria-label]="collapsed() ? logoutLabel() : null"
+        [matTooltip]="collapsed() ? logoutLabel() : ''"
+        [matTooltipDisabled]="!collapsed()"
+        matTooltipPosition="right"
+        (click)="logout()"
+      >
+        <mat-icon aria-hidden="true">logout</mat-icon>
+        @if (!collapsed()) {
+          <span>{{ logoutLabel() }}</span>
+        }
+      </button>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <router-outlet />
+  </main>
+</div>

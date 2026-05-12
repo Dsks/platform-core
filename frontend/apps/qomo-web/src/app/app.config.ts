@@ -9,7 +9,8 @@ import {
   provideClientHydration,
   withEventReplay,
 } from '@angular/platform-browser';
-import { provideHttpClient } from '@angular/common/http';
+import { provideSharedApi } from '@qomo/shared-api';
+import { provideSessionBootstrap } from '@qomo/shared-auth';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -17,6 +18,7 @@ export const appConfig: ApplicationConfig = {
     provideClientHydration(withEventReplay()),
     provideBrowserGlobalErrorListeners(),
     provideRouter(appRoutes),
-    provideHttpClient(),
+    provideSharedApi(),
+    provideSessionBootstrap(),
   ],
 };

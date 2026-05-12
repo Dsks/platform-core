@@ -18,6 +18,11 @@
           {
             "glob": "**/*",
             "input": "apps/qomo-admin/public"
+          },
+          {
+            "glob": "**/*",
+            "input": "libs/shared/assets/public",
+            "output": "."
           }
         ],
         "styles": ["apps/qomo-admin/src/styles.scss"],
@@ -51,6 +56,9 @@
     "serve": {
       "continuous": true,
       "executor": "@angular/build:dev-server",
+      "options": {
+        "servePath": "/admin"
+      },
       "configurations": {
         "production": {
           "buildTarget": "qomo-admin:build:production"
@@ -67,7 +75,7 @@
     "test": {
       "executor": "@angular/build:unit-test",
       "options": {
-        "runnerConfig": "apps/qomo-web/vitest.config.ts"
+        "runnerConfig": "apps/qomo-admin/vitest.config.ts"
       }
     },
     "serve-static": {

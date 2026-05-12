@@ -1,0 +1,17 @@
+{
+  "name": "@qomo/shared-api",
+  "version": "0.0.1",
+  "private": true,
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "dependencies": {
+    "@qomo/shared-models": "0.0.1",
+    "tslib": "^2.3.0"
+  },
+  "peerDependencies": {
+    "@angular/common": "~21.0.0",
+    "@angular/core": "~21.0.0",
+    "rxjs": "~7.8.0"
+  }
+}

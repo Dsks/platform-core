@@ -1,0 +1,244 @@
+:host {
+  display: block;
+}
+
+.users-list {
+  color: var(--color-text-primary);
+}
+
+.users-header {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-between;
+  margin: 0 auto 28px;
+}
+
+.users-header p {
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
+.users-header h1 {
+  font-size: 2rem;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.create-user-button {
+  min-height: 40px;
+}
+
+.users-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-panel);
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.panel-heading {
+  align-items: center;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 20px 24px;
+}
+
+.panel-heading h2 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.users-search-field {
+  flex: 0 1 320px;
+  min-width: 240px;
+}
+
+.users-filters {
+  border-bottom: 1px solid var(--color-border);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding: 16px 24px 0;
+}
+
+.users-filter-field {
+  min-width: 0;
+  width: 100%;
+}
+
+.load-error {
+  background: var(--color-error-container);
+  border: 1px solid color-mix(in srgb, var(--color-error), transparent 55%);
+  border-radius: 6px;
+  color: var(--color-error);
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin: 18px 24px 0;
+  padding: 10px 12px;
+}
+
+.table-shell {
+  overflow-x: auto;
+  position: relative;
+}
+
+.table-shell-loading .users-table {
+  opacity: 0.42;
+}
+
+.loading-state {
+  align-items: center;
+  background: color-mix(in srgb, var(--color-surface), transparent 12%);
+  color: var(--color-text-secondary);
+  display: flex;
+  font-weight: 700;
+  gap: 10px;
+  inset: 0;
+  justify-content: center;
+  min-height: 240px;
+  position: absolute;
+  z-index: 1;
+}
+
+.loading-state mat-progress-spinner {
+  --mdc-circular-progress-active-indicator-color: var(--color-primary);
+}
+
+.users-table {
+  min-width: 1380px;
+  width: 100%;
+}
+
+.users-table th {
+  color: var(--color-text-secondary);
+  font-weight: 700;
+  text-align: center;
+}
+
+.users-table td {
+  text-align: center;
+}
+
+.users-table td:first-child {
+  max-width: 120px;
+  min-width: 0;
+  overflow: hidden;
+  padding: 10px 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roles-list,
+.actions-list {
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.date-cell {
+  white-space: nowrap;
+}
+
+.role-pill,
+.status-pill {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.82rem;
+  font-weight: 700;
+  min-height: 26px;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+
+.role-pill {
+  background: var(--color-surface-variant);
+  border: 1px solid var(--color-border);
+  color: var(--color-primary);
+}
+
+.status-pill {
+  background: var(--color-success-container);
+  border: 1px solid color-mix(in srgb, var(--color-success), transparent 58%);
+  color: var(--color-success);
+}
+
+.status-pill-off {
+  background: var(--color-error-container);
+  border-color: color-mix(in srgb, var(--color-error), transparent 58%);
+  color: var(--color-error);
+}
+
+.empty-state {
+  color: var(--color-text-secondary);
+  margin: 0;
+  padding: 32px 24px;
+  text-align: center;
+}
+
+button {
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+button.edit-btn {
+  color: #dbca34;
+}
+
+button.delete-btn {
+  color: var(--color-error);
+}
+
+mat-paginator {
+  border-top: 1px solid var(--color-border);
+}
+
+@media (max-width: 960px) {
+  .users-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .users-header {
+    margin-bottom: 20px;
+  }
+
+  .users-header h1 {
+    font-size: 1.65rem;
+  }
+
+  .panel-heading {
+    padding: 18px 16px;
+  }
+
+  .users-search-field {
+    flex-basis: 100%;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .users-filters {
+    grid-template-columns: 1fr;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .load-error {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+}

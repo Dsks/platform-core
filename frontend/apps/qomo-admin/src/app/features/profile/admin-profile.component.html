@@ -1,0 +1,28 @@
+<main class="admin-profile">
+  <header class="profile-header">
+    <h1>Perfil</h1>
+  </header>
+
+  <section class="session-card" aria-labelledby="session-title">
+    <h2 id="session-title">Sesion actual</h2>
+
+    @if (currentUser(); as user) {
+      <dl>
+        <div>
+          <dt>Email</dt>
+          <dd>{{ user.email }}</dd>
+        </div>
+        <div>
+          <dt>Roles</dt>
+          <dd>
+            @for (role of user.roles; track role) {
+              <span>{{ role }}</span>
+            }
+          </dd>
+        </div>
+      </dl>
+    } @else {
+      <p class="empty-state">No hay datos de usuario disponibles.</p>
+    }
+  </section>
+</main>

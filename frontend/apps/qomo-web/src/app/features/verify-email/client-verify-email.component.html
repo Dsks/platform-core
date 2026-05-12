@@ -1,0 +1,98 @@
+<main class="verify-email">
+  <mat-card class="verify-panel" aria-labelledby="verify-email-title">
+    <mat-card-content class="verify-content">
+      <div class="verify-heading">
+        <img class="auth-logo" src="logo.webp" alt="Logo" />
+        <h1 id="verify-email-title">Verificar cuenta</h1>
+      </div>
+
+      <p class="message">
+        Introduce el código que has recibido para activar la cuenta.
+      </p>
+
+      <form class="verify-form" [formGroup]="verifyForm" (ngSubmit)="verifyEmail()" novalidate>
+        @if (verifyErrorMessage(); as message) {
+          <p class="error-message" role="alert">{{ message }}</p>
+        }
+
+        <mat-form-field appearance="outline" class="auth-field">
+          <mat-label>Código</mat-label>
+          <input
+            matInput
+            type="text"
+            formControlName="code"
+            autocomplete="one-time-code"
+            [attr.aria-invalid]="isCodeInvalid()"
+          />
+          @if (isCodeInvalid()) {
+            <mat-error>Introduce el código de verificación.</mat-error>
+          }
+        </mat-form-field>
+
+        <button
+          mat-flat-button
+          color="primary"
+          class="submit-button"
+          type="submit"
+          [disabled]="verifying()"
+        >
+          <span class="button-content">
+            @if (verifying()) {
+              <mat-progress-spinner
+                class="button-spinner"
+                mode="indeterminate"
+                [diameter]="18"
+              />
+              <span>Verificando...</span>
+            } @else {
+              <span>Verificar cuenta</span>
+            }
+          </span>
+        </button>
+      </form>
+
+      @if (verificationEmail()) {
+        <mat-divider class="resend-divider" />
+
+        <section class="resend-section" aria-labelledby="resend-title">
+          <p>Si necesitas otro código, puedes solicitar un reenvío.</p>
+
+          @if (resendSuccessMessage(); as message) {
+            <p class="success-message" role="status">{{ message }}</p>
+          }
+          @if (resendErrorMessage(); as message) {
+            <p class="error-message" role="alert">{{ message }}</p>
+          }
+
+          @if (resendCooldown() > 0) {
+            <p class="cooldown-message">
+              Podrás solicitar otro código en {{ resendCooldown() }}s.
+            </p>
+          }
+
+          <button
+            mat-stroked-button
+            color="primary"
+            type="button"
+            class="secondary-button"
+            (click)="resendCode()"
+            [disabled]="resending() || resendCooldown() > 0"
+          >
+            <span class="button-content">
+              @if (resending()) {
+                <mat-progress-spinner
+                  class="button-spinner"
+                  mode="indeterminate"
+                  [diameter]="18"
+                />
+                <span>Reenviando...</span>
+              } @else {
+                <span>Reenviar código</span>
+              }
+            </span>
+          </button>
+        </section>
+      }
+    </mat-card-content>
+  </mat-card>
+</main>

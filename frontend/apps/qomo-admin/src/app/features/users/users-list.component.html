@@ -1,0 +1,242 @@
+<main class="users-list">
+  <header class="users-header">
+    <div>
+      <h1>Usuarios</h1>
+    </div>
+    <button
+      mat-flat-button
+      color="primary"
+      class="create-user-button"
+      type="button"
+      (click)="createUser()"
+    >
+      Crear usuario
+    </button>
+  </header>
+
+  <section class="users-panel" aria-labelledby="users-title">
+    <div class="panel-heading">
+      <h2 id="users-title">Listado de usuarios</h2>
+
+      <mat-form-field
+        appearance="outline"
+        subscriptSizing="dynamic"
+        class="users-search-field"
+      >
+        <input
+          matInput
+          type="search"
+          placeholder="Buscar usuario..."
+          aria-label="Buscar usuario"
+          [value]="searchTerm()"
+          (input)="onSearchChange($any($event.target).value)"
+        />
+      </mat-form-field>
+    </div>
+
+    <div class="users-filters" aria-label="Filtros de usuarios">
+      <mat-form-field appearance="outline" class="users-filter-field">
+        <mat-label>Borrado</mat-label>
+        <mat-select
+          [value]="deletedFilter()"
+          (selectionChange)="onDeletedFilterChange($event.value)"
+        >
+          @for (option of deletedFilterOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="users-filter-field">
+        <mat-label>Estado</mat-label>
+        <mat-select
+          [value]="activeFilter()"
+          (selectionChange)="onActiveFilterChange($event.value)"
+        >
+          @for (option of activeFilterOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="users-filter-field">
+        <mat-label>Email verificado</mat-label>
+        <mat-select
+          [value]="verifiedFilter()"
+          (selectionChange)="onVerifiedFilterChange($event.value)"
+        >
+          @for (option of verifiedFilterOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="users-filter-field">
+        <mat-label>Rol</mat-label>
+        <mat-select
+          [value]="roleFilter()"
+          (selectionChange)="onRoleFilterChange($event.value)"
+        >
+          @for (option of roleFilterOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    @if (errorMessage(); as message) {
+      <p class="load-error" role="alert">{{ message }}</p>
+    }
+
+    @if (deleteErrorMessage(); as message) {
+      <p class="load-error" role="alert">{{ message }}</p>
+    }
+
+    <div class="table-shell" [class.table-shell-loading]="loading()">
+      @if (loading()) {
+        <div class="loading-state" aria-live="polite">
+          <mat-progress-spinner mode="indeterminate" [diameter]="28" />
+          <span>Cargando usuarios...</span>
+        </div>
+      }
+
+      <table
+        mat-table
+        matSort
+        matSortDisableClear
+        [dataSource]="users()"
+        [matSortActive]="sortActive()"
+        [matSortDirection]="sortDirection()"
+        class="users-table"
+        (matSortChange)="onSortChange($event)"
+      >
+        <ng-container matColumnDef="email">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Email</th>
+          <td
+            mat-cell
+            *matCellDef="let user"
+            [matTooltip]="user.email"
+            matTooltipPosition="above"
+          >
+            {{ user.email }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="active">
+          <th mat-header-cell *matHeaderCellDef>Activo</th>
+          <td mat-cell *matCellDef="let user">
+            <span class="status-pill" [class.status-pill-off]="!user.active">
+              {{ user.active ? 'Si' : 'No' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="emailVerified">
+          <th mat-header-cell *matHeaderCellDef>Email verificado</th>
+          <td mat-cell *matCellDef="let user">
+            <span
+              class="status-pill"
+              [class.status-pill-off]="!user.emailVerified"
+            >
+              {{ user.emailVerified ? 'Si' : 'No' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="roles">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Roles</th>
+          <td mat-cell *matCellDef="let user">
+            <div class="roles-list">
+              @for (role of user.roles; track role) {
+                <span class="role-pill">{{ role }}</span>
+              }
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="lastLogin">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="lastLoginAt">
+            Ultimo login
+          </th>
+          <td mat-cell *matCellDef="let user" class="date-cell">
+            @if (user.lastLogin) {
+              {{ user.lastLogin | date: 'dd/MM/yyyy HH:mm' }}
+            } @else {
+              —
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="createdAt">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Creado</th>
+          <td mat-cell *matCellDef="let user" class="date-cell">
+            @if (user.createdAt) {
+              {{ user.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+            } @else {
+              —
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="updatedAt">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Actualizado</th>
+          <td mat-cell *matCellDef="let user" class="date-cell">
+            @if (user.updatedAt) {
+              {{ user.updatedAt | date: 'dd/MM/yyyy HH:mm' }}
+            } @else {
+              —
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="deletedAt">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Borrado</th>
+          <td mat-cell *matCellDef="let user" class="date-cell">
+            @if (user.deletedAt) {
+              {{ user.deletedAt | date: 'dd/MM/yyyy HH:mm' }}
+            } @else {
+              —
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Acciones</th>
+          <td mat-cell *matCellDef="let user">
+            <div class="actions-list">
+              <button class="edit-btn" (click)="editUser(user)">
+                <mat-icon aria-hidden="true">edit</mat-icon>
+              </button>
+
+              <button
+                class="delete-btn"
+                [disabled]="!!user.deletedAt || deletingUserId() !== null"
+                (click)="deleteUser(user)"
+              >
+                <mat-icon aria-hidden="true">delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+
+      @if (!loading() && users().length === 0 && !errorMessage()) {
+        <p class="empty-state">No hay usuarios para mostrar.</p>
+      }
+    </div>
+
+    <mat-paginator
+      aria-label="Paginacion de usuarios"
+      [disabled]="loading()"
+      [length]="totalElements()"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="pageSizeOptions"
+      showFirstLastButtons
+      (page)="onPageChange($event)"
+    />
+  </section>
+</main>
