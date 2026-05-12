@@ -1,0 +1,197 @@
+@use 'sass:map';
+
+$font-family: Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+$base-colors: (
+  primary: #2563eb,
+  primary-container: #dbeafe,
+  primary-light: #60a5fa,
+  secondary: #0f766e,
+  accent: #7c3aed,
+  tertiary: #7c3aed,
+  error: #dc2626,
+  warn: #dc2626,
+  success: #16a34a,
+  on-primary: #ffffff,
+  on-error: #ffffff,
+  focus-ring: rgba(37, 99, 235, 0.36),
+);
+
+$light-colors: map.merge(
+  $base-colors,
+  (
+    background: #f8fafc,
+    surface: #ffffff,
+    surface-variant: #eef2ff,
+    text-primary: #0f172a,
+    text-secondary: #475569,
+    border: #dbe3ef,
+    error-container: #fee2e2,
+    success-container: #dcfce7,
+    shadow: rgba(15, 23, 42, 0.12),
+  )
+);
+
+$dark-colors: map.merge(
+  $base-colors,
+  (
+    primary-container: #1e3a8a,
+    primary-light: #93c5fd,
+    background: #020617,
+    surface: #0f172a,
+    surface-variant: #1e293b,
+    text-primary: #f8fafc,
+    text-secondary: #cbd5e1,
+    border: #334155,
+    error-container: #450a0a,
+    success-container: #052e16,
+    focus-ring: rgba(147, 197, 253, 0.42),
+    shadow: rgba(0, 0, 0, 0.35),
+  )
+);
+
+$_palettes: (
+  primary: (
+    0: #000000,
+    10: #001b3f,
+    20: #003063,
+    25: #003a78,
+    30: #00468f,
+    35: #0052a8,
+    40: #2563eb,
+    50: #477cf0,
+    60: #6a96f4,
+    70: #8fb1f8,
+    80: #b8ccfb,
+    90: #dbeafe,
+    95: #eef4ff,
+    98: #f8fbff,
+    99: #fcfdff,
+    100: #ffffff,
+  ),
+  secondary: (
+    0: #000000,
+    10: #00201d,
+    20: #003733,
+    25: #00443f,
+    30: #00514b,
+    35: #005f58,
+    40: #0f766e,
+    50: #219088,
+    60: #3aaba2,
+    70: #5cc7bd,
+    80: #84ddd5,
+    90: #ccfbf1,
+    95: #e6fffb,
+    98: #f2fffd,
+    99: #f8fffe,
+    100: #ffffff,
+  ),
+  tertiary: (
+    0: #000000,
+    10: #24005a,
+    20: #3c008c,
+    25: #4900a8,
+    30: #5700c7,
+    35: #6618dc,
+    40: #7c3aed,
+    50: #8f55f2,
+    60: #a374f6,
+    70: #b996fa,
+    80: #d1b8fd,
+    90: #ede9fe,
+    95: #f5f0ff,
+    98: #fcf8ff,
+    99: #fffbff,
+    100: #ffffff,
+  ),
+  neutral: (
+    0: #000000,
+    10: #0f172a,
+    20: #1e293b,
+    25: #293548,
+    30: #334155,
+    35: #3f4c63,
+    40: #475569,
+    50: #64748b,
+    60: #94a3b8,
+    70: #cbd5e1,
+    80: #e2e8f0,
+    90: #eef2f7,
+    95: #f4f7fb,
+    98: #f8fafc,
+    99: #fcfdff,
+    100: #ffffff,
+  ),
+  neutral-variant: (
+    0: #000000,
+    10: #111827,
+    20: #1f2937,
+    25: #2b3544,
+    30: #334155,
+    35: #405069,
+    40: #506078,
+    50: #64748b,
+    60: #94a3b8,
+    70: #cbd5e1,
+    80: #dbe3ef,
+    90: #eef2ff,
+    95: #f5f7ff,
+    98: #fafbff,
+    99: #fdfdff,
+    100: #ffffff,
+  ),
+  error: (
+    0: #000000,
+    10: #410002,
+    20: #690005,
+    25: #7e0007,
+    30: #93000a,
+    35: #a80710,
+    40: #dc2626,
+    50: #e54848,
+    60: #ef6b6b,
+    70: #f58f8f,
+    80: #fbb4b4,
+    90: #fee2e2,
+    95: #fff1f1,
+    98: #fff8f8,
+    99: #fffbff,
+    100: #ffffff,
+  ),
+);
+
+$_rest: (
+  secondary: map.get($_palettes, secondary),
+  neutral: map.get($_palettes, neutral),
+  neutral-variant: map.get($_palettes, neutral-variant),
+  error: map.get($_palettes, error),
+);
+
+$material-primary-palette: map.merge(map.get($_palettes, primary), $_rest);
+$material-tertiary-palette: map.merge(map.get($_palettes, tertiary), $_rest);
+
+@mixin emit-color-vars($colors) {
+  --color-primary: #{map.get($colors, primary)};
+  --color-primary-container: #{map.get($colors, primary-container)};
+  --color-primary-light: #{map.get($colors, primary-light)};
+  --color-secondary: #{map.get($colors, secondary)};
+  --color-accent: #{map.get($colors, accent)};
+  --color-tertiary: #{map.get($colors, tertiary)};
+  --color-error: #{map.get($colors, error)};
+  --color-warn: #{map.get($colors, warn)};
+  --color-success: #{map.get($colors, success)};
+  --color-background: #{map.get($colors, background)};
+  --color-surface: #{map.get($colors, surface)};
+  --color-surface-variant: #{map.get($colors, surface-variant)};
+  --color-text-primary: #{map.get($colors, text-primary)};
+  --color-text-secondary: #{map.get($colors, text-secondary)};
+  --color-border: #{map.get($colors, border)};
+  --color-focus-ring: #{map.get($colors, focus-ring)};
+  --color-on-primary: #{map.get($colors, on-primary)};
+  --color-on-error: #{map.get($colors, on-error)};
+  --color-error-container: #{map.get($colors, error-container)};
+  --color-success-container: #{map.get($colors, success-container)};
+  --shadow-panel: 0 18px 45px #{map.get($colors, shadow)};
+  --font-family-base: #{$font-family};
+}

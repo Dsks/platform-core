@@ -1,0 +1,80 @@
+:host {
+  display: block;
+}
+
+.admin-profile {
+  color: var(--color-text-primary);
+}
+
+.profile-header {
+  margin: 0 auto 28px;
+}
+
+.profile-header p {
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
+.profile-header h1 {
+  font-size: 2rem;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.session-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-panel);
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.session-card h2 {
+  font-size: 1rem;
+  margin: 0 0 18px;
+}
+
+dl {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+}
+
+dl div {
+  display: grid;
+  gap: 6px;
+}
+
+dt {
+  color: var(--color-text-secondary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+dd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+}
+
+dd span {
+  background: var(--color-surface-variant);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-primary);
+  font-size: 0.86rem;
+  font-weight: 700;
+  padding: 4px 10px;
+}
+
+.empty-state {
+  color: var(--color-text-secondary);
+  margin: 0;
+}

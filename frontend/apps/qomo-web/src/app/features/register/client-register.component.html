@@ -1,0 +1,87 @@
+<main class="client-register">
+  <mat-card class="register-panel" aria-labelledby="client-register-title">
+    <mat-card-content class="register-content">
+      <div class="register-heading">
+        <img class="auth-logo" src="logo.webp" alt="Logo" />
+        <h1 id="client-register-title">Crear cuenta</h1>
+      </div>
+
+      <form class="register-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        @if (errorMessage(); as message) {
+          <p class="register-error" role="alert">{{ message }}</p>
+        }
+
+        <mat-form-field appearance="outline" class="auth-field">
+          <mat-label>Email</mat-label>
+          <input
+            matInput
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            [attr.aria-invalid]="isFieldInvalid('email')"
+          />
+          @if (isFieldInvalid('email')) {
+            <mat-error>Introduce un email válido.</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="auth-field">
+          <mat-label>Contraseña</mat-label>
+          <input
+            matInput
+            type="password"
+            formControlName="password"
+            autocomplete="new-password"
+            [attr.aria-invalid]="isFieldInvalid('password')"
+          />
+          @if (isFieldInvalid('password')) {
+            <mat-error>Introduce una contraseña.</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="auth-field">
+          <mat-label>Confirmar contraseña</mat-label>
+          <input
+            matInput
+            type="password"
+            formControlName="confirmPassword"
+            autocomplete="new-password"
+            [errorStateMatcher]="confirmPasswordErrorStateMatcher"
+            [attr.aria-invalid]="isFieldInvalid('confirmPassword') || isPasswordMismatch()"
+          />
+          @if (isFieldInvalid('confirmPassword')) {
+            <mat-error>Confirma tu contraseña.</mat-error>
+          } @else if (isPasswordMismatch()) {
+            <mat-error>Las contraseñas no coinciden.</mat-error>
+          }
+        </mat-form-field>
+
+        <button
+          mat-flat-button
+          color="primary"
+          class="submit-button"
+          type="submit"
+          [disabled]="loading()"
+        >
+          <span class="button-content">
+            @if (loading()) {
+              <mat-progress-spinner
+                class="button-spinner"
+                mode="indeterminate"
+                [diameter]="18"
+              />
+              <span>Creando...</span>
+            } @else {
+              <span>Crear cuenta</span>
+            }
+          </span>
+        </button>
+
+        <p class="form-link">
+          ¿Ya tienes cuenta?
+          <a mat-button color="primary" routerLink="/iniciar-sesion">Iniciar sesión</a>
+        </p>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</main>

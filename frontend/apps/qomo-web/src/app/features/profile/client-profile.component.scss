@@ -1,0 +1,84 @@
+:host {
+  display: block;
+}
+
+.client-profile {
+  background: #f6f8fb;
+  color: #17202a;
+  padding: 32px;
+}
+
+.profile-header {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  margin: 0 auto 28px;
+}
+
+.profile-header p {
+  color: #627184;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
+.profile-header h1 {
+  font-size: 2rem;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.session-card {
+  background: #ffffff;
+  border: 1px solid #dce3ea;
+  border-radius: 8px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.session-card h2 {
+  font-size: 1rem;
+  margin: 0 0 18px;
+}
+
+dl {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+}
+
+dl div {
+  display: grid;
+  gap: 6px;
+}
+
+dt {
+  color: #627184;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+dd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+}
+
+dd span {
+  background: #edf3f6;
+  border: 1px solid #d5e2e8;
+  border-radius: 999px;
+  color: #1f4f64;
+  font-size: 0.86rem;
+  font-weight: 700;
+  padding: 4px 10px;
+}
+
+.empty-state {
+  color: #627184;
+  margin: 0;
+}

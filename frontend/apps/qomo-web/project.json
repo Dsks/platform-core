@@ -18,6 +18,11 @@
           {
             "glob": "**/*",
             "input": "apps/qomo-web/public"
+          },
+          {
+            "glob": "**/*",
+            "input": "libs/shared/assets/public",
+            "output": "."
           }
         ],
         "styles": ["apps/qomo-web/src/styles.scss"],

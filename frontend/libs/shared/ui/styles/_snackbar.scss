@@ -1,0 +1,35 @@
+@use '@angular/material' as mat;
+
+.mat-mdc-snack-bar-container.snackbar-success {
+  @include mat.snack-bar-overrides((
+    container-color: var(--color-success),
+    supporting-text-color: #ffffff,
+    button-color: #ffffff,
+  ));
+}
+
+.mat-mdc-snack-bar-container.snackbar-error {
+  @include mat.snack-bar-overrides((
+    container-color: var(--color-error),
+    supporting-text-color: #ffffff,
+    button-color: #ffffff,
+  ));
+}
+
+.mat-mdc-snack-bar-container.snackbar-info {
+  @include mat.snack-bar-overrides((
+    container-color: var(--color-primary),
+    supporting-text-color: #ffffff,
+    button-color: #ffffff,
+  ));
+}
+
+.mat-mdc-snack-bar-container.snackbar-success,
+.mat-mdc-snack-bar-container.snackbar-error,
+.mat-mdc-snack-bar-container.snackbar-info {
+  .mat-mdc-snack-bar-label,
+  .mdc-snackbar__label {
+    width: 100%;
+    text-align: center;
+  }
+}

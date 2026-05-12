@@ -1,0 +1,92 @@
+@use '@angular/material' as mat;
+@use './snackbar';
+@use './tokens' as tokens;
+
+html {
+  color-scheme: light;
+  min-width: 320px;
+
+  @include mat.theme(
+    (
+      color: (
+        theme-type: light,
+        primary: tokens.$material-primary-palette,
+        tertiary: tokens.$material-tertiary-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+}
+
+:root,
+html.theme-light {
+  @include tokens.emit-color-vars(tokens.$light-colors);
+}
+
+html.theme-light {
+  color-scheme: light;
+}
+
+html.theme-dark {
+  color-scheme: dark;
+
+  @include tokens.emit-color-vars(tokens.$dark-colors);
+  @include mat.theme(
+    (
+      color: (
+        theme-type: dark,
+        primary: tokens.$material-primary-palette,
+        tertiary: tokens.$material-tertiary-palette,
+      ),
+    )
+  );
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-base);
+  margin: 0;
+  min-width: 320px;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration-color: color-mix(in srgb, var(--color-primary), transparent 55%);
+  text-underline-offset: 0.16em;
+}
+
+a:hover {
+  text-decoration-color: currentColor;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-primary), transparent 78%);
+  color: var(--color-text-primary);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.mat-mdc-button-base {
+  --mat-text-button-label-text-color: var(--color-primary);
+  --mdc-outlined-button-label-text-color: var(--color-primary);
+  --mdc-outlined-button-outline-color: var(--color-border);
+}
+
+.mat-mdc-unelevated-button.mat-primary,
+.mat-mdc-raised-button.mat-primary,
+.mat-mdc-fab.mat-primary,
+.mat-mdc-mini-fab.mat-primary {
+  --mdc-filled-button-container-color: var(--color-primary);
+  --mdc-filled-button-label-text-color: var(--color-on-primary);
+}
