@@ -50,6 +50,13 @@ Repositorio monorepo con arquitectura de microservicios.
 
 ---
 
+## Credenciales locales por defecto
+
+- La cuenta superadmin inicial se define en `.env.example` con `SUPERADMIN_EMAIL=superadmin@core.app`.
+- La variable `SUPERADMIN_INITIAL_PASSWORD` aparece codificada en `.env.example` como hash SHA-256; la contraseña por defecto en claro es `1234`. Si quieres cambiarla, guarda en esa variable el SHA-256 de la nueva contraseña.
+
+---
+
 ## Docker Compose por perfiles
 
 El archivo principal de Docker Compose se encuentra en:
