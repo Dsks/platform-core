@@ -2,7 +2,9 @@ package app.platformcore.apiusers.application.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -51,6 +53,73 @@ class GetUserServiceTest {
   void setUp() {
     ClockPort clock = () -> NOW;
     service = new GetUserService(userRepository, clock);
+  }
+
+  @Test
+  void getByIdForAdmin_shouldRejectUserRoleBeforeRepositoryLookup() {
+    var ex =
+        assertThrows(
+            ForbiddenOperationException.class,
+            () -> service.getByIdForAdmin(TARGET_ID, Set.of("USER")));
+
+    assertEquals("FORBIDDEN_OPERATION", ex.code());
+    verify(userRepository, never()).findById(any());
+  }
+
+  @Test
+  void getByIdForAdmin_shouldRejectMissingRolesBeforeRepositoryLookup() {
+    assertThrows(
+        ForbiddenOperationException.class, () -> service.getByIdForAdmin(TARGET_ID, Set.of()));
+
+    verify(userRepository, never()).findById(any());
+  }
+
+  @Test
+  void getByIdForAdmin_shouldAllowAdminToReadUserAdminAndMixedTargets() {
+    User userTarget = userWithRoles(Role.user(roleId("11111111-1111-4111-8111-111111111111")));
+    User adminTarget = userWithRoles(Role.admin(roleId("22222222-2222-4222-8222-222222222222")));
+    User mixedTarget =
+        userWithRoles(
+            Role.user(roleId("33333333-3333-4333-8333-333333333333")),
+            Role.admin(roleId("44444444-4444-4444-8444-444444444444")));
+    when(userRepository.findById(TARGET_ID))
+        .thenReturn(Optional.of(userTarget), Optional.of(adminTarget), Optional.of(mixedTarget));
+
+    assertSame(userTarget, service.getByIdForAdmin(TARGET_ID, Set.of("ADMIN")).orElseThrow());
+    assertSame(adminTarget, service.getByIdForAdmin(TARGET_ID, Set.of("ADMIN")).orElseThrow());
+    assertSame(mixedTarget, service.getByIdForAdmin(TARGET_ID, Set.of("ADMIN")).orElseThrow());
+
+    verify(userRepository, times(3)).findById(TARGET_ID);
+  }
+
+  @Test
+  void getByIdForAdmin_shouldRejectAdminReadingSuperAdmin() {
+    User target =
+        userWithRoles(Role.of(roleId("55555555-5555-4555-8555-555555555555"), "SUPERADMIN"));
+    when(userRepository.findById(TARGET_ID)).thenReturn(Optional.of(target));
+
+    var ex =
+        assertThrows(
+            ForbiddenOperationException.class,
+            () -> service.getByIdForAdmin(TARGET_ID, Set.of("ADMIN")));
+
+    assertEquals("FORBIDDEN_OPERATION", ex.code());
+  }
+
+  @Test
+  void getByIdForAdmin_shouldAllowSuperAdminToReadSuperAdmin() {
+    User target =
+        userWithRoles(Role.of(roleId("66666666-6666-4666-8666-666666666666"), "SUPERADMIN"));
+    when(userRepository.findById(TARGET_ID)).thenReturn(Optional.of(target));
+
+    assertSame(target, service.getByIdForAdmin(TARGET_ID, Set.of("SUPERADMIN")).orElseThrow());
+  }
+
+  @Test
+  void getByIdForAdmin_shouldReturnEmptyWhenTargetDoesNotExistForAdmin() {
+    when(userRepository.findById(TARGET_ID)).thenReturn(Optional.empty());
+
+    assertTrue(service.getByIdForAdmin(TARGET_ID, Set.of("ADMIN")).isEmpty());
   }
 
   @Test

@@ -44,15 +44,27 @@ public final class GetUserService implements GetUserUseCase {
   }
 
   /**
-   * Looks up a user by its domain identifier without mutating account state.
+   * Looks up a user by id from an administrative context without mutating account state.
    *
-   * @param id typed user id to query; must be non-null
-   * @return the matching user aggregate, or {@link Optional#empty()} when no user exists
+   * <p>SUPERADMIN actors may read any user. ADMIN actors may read users whose complete role set is
+   * inside the same visible role set used by administrative listings. Other actors are rejected
+   * before the repository is queried.
    */
   @Override
-  public Optional<User> getById(UserId id) {
+  public Optional<User> getByIdForAdmin(UserId id, Set<String> actorRoles) {
     Objects.requireNonNull(id, "id cannot be null");
-    return userRepository.findById(id);
+    Set<String> roles = normalizeRoles(actorRoles);
+
+    if (roles.contains(SUPERADMIN_ROLE)) {
+      return userRepository.findById(id);
+    }
+    if (!roles.contains(ADMIN_ROLE)) {
+      throw new ForbiddenOperationException("Only ADMIN and SUPERADMIN can read users by id");
+    }
+
+    Optional<User> target = userRepository.findById(id);
+    target.ifPresent(this::validateAdminReadVisibility);
+    return target;
   }
 
   /**
@@ -140,6 +152,13 @@ public final class GetUserService implements GetUserUseCase {
 
   private UserRepositoryPort.Page<User> rejectForbidden() {
     throw new ForbiddenOperationException("Only ADMIN and SUPERADMIN can list users");
+  }
+
+  private void validateAdminReadVisibility(User target) {
+    Set<String> targetRoles = normalizeRoles(targetRoleNames(target));
+    if (targetRoles.isEmpty() || !ADMIN_VISIBLE_ROLES.containsAll(targetRoles)) {
+      throw new ForbiddenOperationException("Actor cannot read the target user");
+    }
   }
 
   private String normalizeSearch(String search) {

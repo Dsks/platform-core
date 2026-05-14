@@ -13,9 +13,9 @@ import java.util.Set;
  *
  * <p>This port is intended for inbound adapters such as web controllers, internal jobs, consumers,
  * or application tests that need to read an already identified user. Implementations are
- * responsible for retrieving the aggregate through the application boundary. Transport parsing,
- * HTTP authorization decisions, response DTO mapping, and concrete persistence details remain
- * outside the port.
+ * responsible for retrieving the aggregate through the application boundary and enforcing
+ * administrative read visibility where the method contract includes actor roles. Transport parsing,
+ * response DTO mapping, and concrete persistence details remain outside the port.
  *
  * <p>The returned domain object can contain personal data such as email and account state. Callers
  * should only project fields required by their adapter contract and should avoid logging the full
@@ -24,14 +24,15 @@ import java.util.Set;
 public interface GetUserUseCase {
 
   /**
-   * Looks up a user by its domain identifier.
+   * Looks up a user by id from an administrative read context.
    *
    * @param id typed user identifier; adapters are responsible for parsing external UUID strings
    *     before invoking the port
-   * @return the matching user when present, or {@link Optional#empty()} when no user exists for the
-   *     supplied identifier
+   * @param actorRoles normalized or raw role names from the authenticated actor
+   * @return the matching visible user when present, or {@link Optional#empty()} when no user exists
+   *     for the supplied identifier
    */
-  Optional<User> getById(UserId id);
+  Optional<User> getByIdForAdmin(UserId id, Set<String> actorRoles);
 
   /**
    * Partially updates a user with administrative authorization and idempotent supported fields.

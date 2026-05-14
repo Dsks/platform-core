@@ -192,7 +192,7 @@ class ApiExceptionHandlerWebContractTest {
 
   @Test
   void getUser_whenUserNotFoundExceptionIsThrown_shouldReturnNotFoundProblem() throws Exception {
-    when(getUserUseCase.getById(any()))
+    when(getUserUseCase.getByIdForAdmin(any(), any()))
         .thenThrow(new UserNotFoundException("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"));
 
     mockMvc
@@ -204,12 +204,25 @@ class ApiExceptionHandlerWebContractTest {
   @Test
   void getUser_whenInvalidCommandExceptionIsThrown_shouldReturnBadRequestProblem()
       throws Exception {
-    when(getUserUseCase.getById(any())).thenThrow(InvalidCommandException.blank("id"));
+    when(getUserUseCase.getByIdForAdmin(any(), any()))
+        .thenThrow(InvalidCommandException.blank("id"));
 
     mockMvc
         .perform(get("/v1/users/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.title").value("INVALID_COMMAND"));
+  }
+
+  @Test
+  void getUser_whenForbiddenOperationExceptionIsThrown_shouldReturnForbiddenProblem()
+      throws Exception {
+    when(getUserUseCase.getByIdForAdmin(any(), any()))
+        .thenThrow(new ForbiddenOperationException("Actor cannot read the target user"));
+
+    mockMvc
+        .perform(get("/v1/users/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.title").value("FORBIDDEN_OPERATION"));
   }
 
   @Test

@@ -147,9 +147,9 @@ public class UserController {
    * Reads a user representation by UUID path segment.
    *
    * <p>The path variable is validated at the HTTP edge before conversion to {@link UserId}. A found
-   * user returns {@code 200 OK} with {@link UserResponse}; an absent user returns {@code 404 Not
-   * Found}; an invalid UUID format is handled as a {@code 400 Bad Request} validation error by
-   * {@link ApiExceptionHandler}. No cookies are read or written.
+   * user visible to the administrative actor returns {@code 200 OK} with {@link UserResponse}; an
+   * absent user returns {@code 404 Not Found}; an invalid UUID format is handled as a {@code 400
+   * Bad Request} validation error by {@link ApiExceptionHandler}.
    *
    * @param id UUID string identifying the user resource
    * @return user representation or an empty not-found response
@@ -157,9 +157,9 @@ public class UserController {
   @Operation(
       summary = "Get a user by id",
       description =
-          "Returns a safe user representation by UUID for an authenticated request. The response"
-              + " excludes password hashes, tokens, verification codes, and other credential"
-              + " material. CSRF is not required for this read-only endpoint.")
+          "Returns a safe user representation by UUID for an authenticated administrative request."
+              + " The response excludes password hashes, tokens, verification codes, and other"
+              + " credential material. CSRF is not required for this read-only endpoint.")
   @ApiResponses({
     @ApiResponse(
         responseCode = "200",
@@ -177,7 +177,7 @@ public class UserController {
                 schema = @Schema(implementation = ProblemDetail.class))),
     @ApiResponse(
         responseCode = "403",
-        description = "Authentication requirements are not satisfied.",
+        description = "The authenticated actor cannot read the target user.",
         content = @Content()),
     @ApiResponse(responseCode = "404", description = "User not found.", content = @Content())
   })
@@ -193,9 +193,10 @@ public class UserController {
                       example = "2fa8b8e9-3090-404e-a6e8-d95dd8e3b0ec"))
           @PathVariable
           @Pattern(regexp = UUID_PATTERN, message = "must be a valid UUID")
-          String id) {
+          String id,
+      Authentication authentication) {
     return getUser
-        .getById(UserId.of(id))
+        .getByIdForAdmin(UserId.of(id), roleNames(authentication))
         .map(this::toResponse)
         .map(ResponseEntity::ok)
         .orElseGet(() -> ResponseEntity.notFound().build());

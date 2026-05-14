@@ -114,7 +114,7 @@ class SecurityConfigJwtWebLayerTest {
     mockMvc
         .perform(get("/v1/users/2fa8b8e9-3090-404e-a6e8-d95dd8e3b0ec"))
         .andExpect(status().isForbidden());
-    verify(getUserUseCase, never()).getById(any());
+    verify(getUserUseCase, never()).getByIdForAdmin(any(), any());
   }
 
   @Test
@@ -302,23 +302,43 @@ class SecurityConfigJwtWebLayerTest {
                 .cookie(new Cookie(AuthController.AUTH_COOKIE_NAME, "invalid-jwt")))
         .andExpect(status().isForbidden());
 
-    verify(getUserUseCase, never()).getById(any());
+    verify(getUserUseCase, never()).getByIdForAdmin(any(), any());
   }
 
   @Test
-  void protectedUserRouteAllowsAccessWhenJwtCookieIsValid() throws Exception {
+  void protectedUserRouteForbidsAuthenticatedUserRole() throws Exception {
     when(clockPort.now()).thenReturn(Instant.parse("2026-03-26T10:15:30Z"));
-    when(jwtTokenProviderPort.validate(eq("valid-jwt"), any(Instant.class))).thenReturn(true);
-    when(jwtTokenProviderPort.subject("valid-jwt"))
+    when(jwtTokenProviderPort.validate(eq("user-jwt"), any(Instant.class))).thenReturn(true);
+    when(jwtTokenProviderPort.subject("user-jwt"))
         .thenReturn("8ad3b073-0d96-4f2e-b9e7-c93fa89075bf");
-    when(jwtTokenProviderPort.roles("valid-jwt")).thenReturn(java.util.Set.of("USER"));
-    when(getUserUseCase.getById(any())).thenReturn(Optional.empty());
+    when(jwtTokenProviderPort.roles("user-jwt")).thenReturn(java.util.Set.of("USER"));
 
     mockMvc
         .perform(
             get("/v1/users/2fa8b8e9-3090-404e-a6e8-d95dd8e3b0ec")
-                .cookie(new Cookie(AuthController.AUTH_COOKIE_NAME, "valid-jwt")))
+                .cookie(new Cookie(AuthController.AUTH_COOKIE_NAME, "user-jwt")))
+        .andExpect(status().isForbidden());
+
+    verify(getUserUseCase, never()).getByIdForAdmin(any(), any());
+  }
+
+  @Test
+  void protectedUserRouteAllowsAdminWithoutCsrfAndReturnsNotFoundWhenMissing() throws Exception {
+    when(clockPort.now()).thenReturn(Instant.parse("2026-03-26T10:15:30Z"));
+    when(jwtTokenProviderPort.validate(eq("admin-read-jwt"), any(Instant.class))).thenReturn(true);
+    when(jwtTokenProviderPort.subject("admin-read-jwt"))
+        .thenReturn("8ad3b073-0d96-4f2e-b9e7-c93fa89075bf");
+    when(jwtTokenProviderPort.roles("admin-read-jwt")).thenReturn(java.util.Set.of("ADMIN"));
+    when(getUserUseCase.getByIdForAdmin(any(), any())).thenReturn(Optional.empty());
+
+    mockMvc
+        .perform(
+            get("/v1/users/2fa8b8e9-3090-404e-a6e8-d95dd8e3b0ec")
+                .cookie(new Cookie(AuthController.AUTH_COOKIE_NAME, "admin-read-jwt")))
         .andExpect(status().isNotFound());
+
+    verify(getUserUseCase)
+        .getByIdForAdmin(UserId.of("2fa8b8e9-3090-404e-a6e8-d95dd8e3b0ec"), Set.of("ADMIN"));
   }
 
   @Test
